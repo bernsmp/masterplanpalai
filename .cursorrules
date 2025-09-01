@@ -1,0 +1,175 @@
+---
+description: 5 Day Sprint Framework - Task-driven development workflows with Claude Code and strict role separation
+globs: **/*
+alwaysApply: true
+---
+
+# 5 Day Sprint Framework - Cursor Rules
+
+## 🎯 ROLE SEPARATION (CRITICAL)
+
+**Cursor Chat = Planning & Coordination**
+- NEVER write code directly
+- Create clear prompts for Claude Code agents
+- Coordinate development workflow
+- Handle project setup and configuration
+- Manage environment variables and security
+
+**Claude Code = Implementation & Coding**
+- Write all code and components
+- Implement features based on Cursor Chat prompts
+- Handle technical implementation details
+- Provide feedback summaries after completion
+
+## 🔐 ENVIRONMENT VARIABLES & SECURITY
+
+**CRITICAL RULES:**
+- ALL credentials stored in `.env.local` (git ignored)
+- Use `process.env.VARIABLE_NAME` in code
+- NEVER hardcode API keys or secrets
+- Supabase Edge Functions for sensitive operations
+- 5DaySprint Supabase credentials ONLY during setup
+
+**Required Variables:**
+```
+PROJECT_NAME="PlanPal AI"
+PROJECT_DESCRIPTION="AI planning assistant for group coordination"
+OPENAI_API_KEY=your_key_here
+WEATHER_API_KEY=your_key_here
+```
+
+## 📝 PROMPT FORMATTING REQUIREMENTS
+
+**Claude Code Prompts:**
+- PLAIN TEXT ONLY (no markdown, bullets, formatting)
+- Include mandatory feedback instruction
+- Make prompts easily copy-pasteable
+- NO code blocks in prompts
+- Clear task descriptions with specific requirements
+
+**Mandatory Feedback Instruction:**
+"After completing all tasks from this prompt, provide a 1-line feedback summary to Cursor Chat about what was accomplished."
+
+## 🚫 CODE WRITING RESTRICTIONS
+
+**Cursor Chat Forbidden:**
+- Writing code directly
+- Implementing features
+- Creating components
+- Technical implementation
+
+**Cursor Chat Allowed:**
+- Project planning and coordination
+- Creating Claude Code prompts
+- Managing workflow and tasks
+- Configuration and setup
+
+## 🔄 DEVELOPMENT WORKFLOW
+
+**Feature Request Process:**
+1. User requests feature
+2. Cursor Chat clarifies requirements
+3. Cursor Chat creates Claude Code prompt
+4. Claude Code implements feature
+5. Claude Code provides feedback summary
+6. Cursor Chat coordinates next steps
+
+**Local Testing Protocol:**
+- All changes tested on localhost:3000 first
+- User approval required before deployment
+- Identical styling between localhost and production
+- No console errors or module resolution issues
+
+## 🎨 SHADCN/UI ECOSYSTEM APPROACH
+
+**Ecosystem-First Strategy:**
+- Use official shadcn/ui components before custom
+- Reference official documentation URLs
+- Install via `npx shadcn add [component]`
+- Leverage complete design system
+- Follow official patterns and examples
+
+**Documentation References:**
+- Components: https://ui.shadcn.com/docs/components
+- Themes: https://ui.shadcn.com/themes
+- Colors: https://ui.shadcn.com/colors
+- Charts: https://ui.shadcn.com/charts
+- Blocks: https://ui.shadcn.com/blocks
+
+## 📊 PROJECT MANAGEMENT
+
+**Systematic Approach:**
+- Break features into clear tasks
+- Coordinate with Claude Code agents
+- Maintain development workflow
+- Ensure quality and security standards
+- Track progress and completion
+
+**Task Creation Protocol:**
+- Clear requirements definition
+- Specific implementation details
+- Integration requirements
+- Testing and validation steps
+- Deployment considerations
+
+## 🔍 WEB SEARCH REQUIREMENTS
+
+**Research Integration:**
+- Use Firecrawl API for current information
+- Research project concepts and features
+- Gather relevant assets and examples
+- Verify API compatibility and documentation
+- Stay updated with latest technologies
+
+## 🚨 TROUBLESHOOTING PROTOCOLS
+
+**Error Recovery:**
+- Maintain Tailwind v4 (never downgrade)
+- Clear npm cache and reinstall if needed
+- Verify Node.js version compatibility
+- Check component installation status
+- Validate configuration files
+
+**Verification Commands:**
+```bash
+# Component count verification
+ls src/components/ui/ | wc -l
+
+# Tailwind v4 verification
+grep -q "@theme" src/app/globals.css
+
+# Build verification
+npm run build
+```
+
+## 🎯 SUCCESS CRITERIA
+
+**Framework Requirements:**
+- 20+ shadcn/ui components installed
+- Tailwind v4 configuration working
+- Dashboard with sidebar-07 layout
+- Login examples with proper branding
+- Landing page with project context
+- Local development server functional
+- Production build successful
+
+**Quality Standards:**
+- No console errors
+- Responsive design working
+- Accessibility features intact
+- TypeScript integration complete
+- Component ecosystem functional
+
+## 🔄 WORKFLOW ENFORCEMENT
+
+**If Cursor Violates Rules:**
+- User types "follow rules" to restore workflow
+- Re-read .cursorrules file
+- Restore proper role separation
+- Generate Claude Code prompts instead of direct implementation
+
+**Continuous Compliance:**
+- Always apply these rules
+- Maintain workflow integrity
+- Ensure proper handoffs
+- Coordinate effectively with Claude Code
