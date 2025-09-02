@@ -24,11 +24,16 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const handleLogin = (password: string) => {
     const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
     
+    // Debug logging
+    console.log('Entered password:', password)
+    console.log('Expected password:', correctPassword)
+    console.log('Environment variable:', process.env.NEXT_PUBLIC_APP_PASSWORD)
+    
     if (password === correctPassword) {
       localStorage.setItem('planpal_authenticated', 'true')
       setIsAuthenticated(true)
     } else {
-      alert('Incorrect password. Please try again.')
+      alert(`Incorrect password. Please try again. (Debug: Expected "${correctPassword}")`)
     }
   }
 
