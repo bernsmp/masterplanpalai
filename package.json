@@ -29,6 +29,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@supabase/supabase-js": "^2.56.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
@@ -37,6 +38,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
     "tailwind-merge": "^3.3.1",
+    "twilio": "^5.8.2",
     "zod": "^4.1.5"
   },
   "devDependencies": {

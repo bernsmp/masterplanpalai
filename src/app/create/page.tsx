@@ -20,13 +20,16 @@ export default function CreatePlanPage() {
     date: "",
     time: "",
     activityType: "",
-    participants: [] as string[]
+    participants: [] as string[],
+    phoneNumbers: [] as string[]
   })
 
   const [newParticipant, setNewParticipant] = useState("")
+  const [newPhoneNumber, setNewPhoneNumber] = useState("")
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [showTimeModal, setShowTimeModal] = useState(false)
+  const [isSendingSMS, setIsSendingSMS] = useState(false)
 
   const activityTypes = [
     { value: "dinner", label: "Dinner", icon: "🍽️" },
@@ -127,6 +130,67 @@ export default function CreatePlanPage() {
       ...prev,
       participants: prev.participants.filter(p => p !== email)
     }))
+  }
+
+  const handleAddPhoneNumber = () => {
+    if (newPhoneNumber.trim() && !formData.phoneNumbers.includes(newPhoneNumber.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumbers: [...prev.phoneNumbers, newPhoneNumber.trim()]
+      }))
+      setNewPhoneNumber("")
+    }
+  }
+
+  const handleRemovePhoneNumber = (phoneNumber: string) => {
+    setFormData(prev => ({
+      ...prev,
+      phoneNumbers: prev.phoneNumbers.filter(p => p !== phoneNumber)
+    }))
+  }
+
+  const sendSMSInvites = async (planId: string) => {
+    if (formData.phoneNumbers.length === 0) {
+      setToastMessage("No phone numbers to send SMS to")
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+      return
+    }
+
+    setIsSendingSMS(true)
+    
+    try {
+      const inviteLink = `${window.location.origin}/join/${planId}`
+      const message = `🎉 You're invited to: ${formData.eventName}\n📅 ${formData.date} at ${formData.time}\n📍 ${formData.activityType}\n\nJoin here: ${inviteLink}\n\nSent via PlanPal AI`
+
+      const response = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumbers: formData.phoneNumbers,
+          message
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setToastMessage(`SMS sent to ${result.summary.successful} recipients!`)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 4000)
+      } else {
+        throw new Error(result.error || 'Failed to send SMS')
+      }
+    } catch (error: any) {
+      console.error('SMS error:', error)
+      setToastMessage(`SMS failed: ${error.message}`)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 4000)
+    } finally {
+      setIsSendingSMS(false)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -378,6 +442,64 @@ export default function CreatePlanPage() {
                 )}
               </div>
 
+              {/* Phone Numbers Section */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Send SMS Invites
+                  <Badge variant="outline" className="text-xs">Premium Feature</Badge>
+                </Label>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Add phone numbers to send professional SMS invites with the join link
+                </p>
+                
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter phone number (e.g., 555-123-4567)"
+                    value={newPhoneNumber}
+                    onChange={(e) => setNewPhoneNumber(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPhoneNumber())}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddPhoneNumber}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Number
+                  </Button>
+                </div>
+
+                {/* Phone Number List */}
+                {formData.phoneNumbers.length > 0 && (
+                  <div className="space-y-2">
+                    <Separator />
+                    <div className="flex flex-wrap gap-2">
+                      {formData.phoneNumbers.map((phoneNumber, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
+                        >
+                          📱 {phoneNumber}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 ml-1 hover:bg-transparent"
+                            onClick={() => handleRemovePhoneNumber(phoneNumber)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Submit Button */}
               <div className="pt-4">
                 <Button
@@ -409,6 +531,9 @@ export default function CreatePlanPage() {
                 )}
                 {formData.participants.length > 0 && (
                   <p><strong>Participants:</strong> {formData.participants.length} people</p>
+                )}
+                {formData.phoneNumbers.length > 0 && (
+                  <p><strong>SMS Invites:</strong> {formData.phoneNumbers.length} phone numbers</p>
                 )}
               </div>
             </CardContent>

@@ -1,87 +1,342 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Clock, Users, MapPin, ArrowLeft, Edit, Share2 } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Share2, Edit, Check } from "lucide-react"
 
 interface Plan {
   id: string
-  eventName: string
+  name: string
   date: string
   time: string
-  activityType: string
-  participants: string[]
-  createdAt: string
+  activity_type: string
+  created_at: string
+}
+
+interface RSVP {
+  id: string
+  plan_id: string
+  user_id: string
+  status: 'going' | 'not_going' | 'maybe'
+  created_at: string
+}
+
+interface Venue {
+  id: string
+  name: string
+  type: string
+  cuisine?: string
+  rating: number
+  price: string
+  distance: string
+  address: string
+  description: string
 }
 
 export default function PlanDetailsPage() {
   const params = useParams()
   const router = useRouter()
+  const planId = params.id as string
+  
   const [plan, setPlan] = useState<Plan | null>(null)
+  const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
+  const [rsvpCounts, setRsvpCounts] = useState({
+    going: 0,
+    not_going: 0,
+    maybe: 0
+  })
+  const [copied, setCopied] = useState(false)
+  const [isSendingSMS, setIsSendingSMS] = useState(false)
+  const [smsResults, setSmsResults] = useState<any>(null)
 
   useEffect(() => {
-    const planId = params.id as string
-    const storedPlans = localStorage.getItem('plans')
-    
-    if (storedPlans) {
-      const plans = JSON.parse(storedPlans)
-      const foundPlan = plans.find((p: Plan) => p.id === planId)
-      
-      if (foundPlan) {
-        setPlan(foundPlan)
-      } else {
-        // Plan not found, redirect to create page
-        router.push('/create')
-      }
-    } else {
-      // No plans stored, redirect to create page
-      router.push('/create')
+    // Mock data for development since supabase was deleted
+    const mockPlan: Plan = {
+      id: planId,
+      name: "Sample Event",
+      date: "2024-01-15",
+      time: "19:00",
+      activity_type: "dinner",
+      created_at: new Date().toISOString()
     }
     
+    setPlan(mockPlan)
     setLoading(false)
-  }, [params.id, router])
+  }, [planId])
+
+  const handleRSVP = async (status: 'going' | 'not_going' | 'maybe') => {
+    try {
+      const userId = 'test-user' // Hardcoded for development
+
+      // Check if user already has an RSVP
+      const existingRSVP = rsvps.find((r: RSVP) => r.user_id === userId)
+
+      if (existingRSVP) {
+        // Update existing RSVP
+        setRsvps(prev => prev.map((r: RSVP) => 
+          r.id === existingRSVP.id ? { ...r, status } : r
+        ))
+      } else {
+        // Create new RSVP
+        const newRSVP: RSVP = {
+          id: `rsvp_${Date.now()}`,
+          plan_id: planId,
+          user_id: userId,
+          status,
+          created_at: new Date().toISOString()
+        }
+        
+        setRsvps(prev => [...prev, newRSVP])
+      }
+
+      // Update counts
+      const newCounts = {
+        going: rsvps.filter((r: RSVP) => r.status === 'going').length + (status === 'going' ? 1 : 0),
+        not_going: rsvps.filter((r: RSVP) => r.status === 'not_going').length + (status === 'not_going' ? 1 : 0),
+        maybe: rsvps.filter((r: RSVP) => r.status === 'maybe').length + (status === 'maybe' ? 1 : 0)
+      }
+      setRsvpCounts(newCounts)
+
+      setCurrentUserRSVP(status)
+    } catch (error) {
+      console.error('Error updating RSVP:', error)
+    }
+  }
+
+  const handleCopyInviteLink = async () => {
+    const shareCode = planId
+    const inviteLink = `${window.location.origin}/join/${shareCode}`
+    
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = inviteLink
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const sendSMSInvites = async () => {
+    if (!plan) return
+
+    setIsSendingSMS(true)
+    setSmsResults(null)
+    
+    try {
+      const inviteLink = `${window.location.origin}/join/${planId}`
+      const message = `🎉 You're invited to: ${plan.name}\n📅 ${plan.date} at ${plan.time}\n📍 ${plan.activity_type}\n\nJoin here: ${inviteLink}\n\nSent via PlanPal AI`
+
+      // For now, we'll use a mock phone number since we don't have the plan's phone numbers
+      // In a real app, you'd get these from the plan data
+      const mockPhoneNumbers = ['+15551234567'] // This would come from plan.phoneNumbers
+
+      const response = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumbers: mockPhoneNumbers,
+          message
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSmsResults(result)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 4000)
+      } else {
+        throw new Error(result.error || 'Failed to send SMS')
+      }
+    } catch (error: any) {
+      console.error('SMS error:', error)
+      setSmsResults({ error: error.message })
+    } finally {
+      setIsSendingSMS(false)
+    }
+  }
+
+  const getSuggestedVenues = (activityType: string): Venue[] => {
+    const venues: { [key: string]: Venue[] } = {
+      dinner: [
+        {
+          id: '1',
+          name: 'The Copper Table',
+          type: 'Restaurant',
+          cuisine: 'Modern American',
+          rating: 4.7,
+          price: '$$$',
+          distance: '0.3 miles away',
+          address: '123 Main Street',
+          description: 'Upscale farm-to-table dining with seasonal ingredients'
+        },
+        {
+          id: '2',
+          name: 'Sakura Sushi Bar',
+          type: 'Restaurant',
+          cuisine: 'Japanese',
+          rating: 4.5,
+          price: '$$',
+          distance: '0.8 miles away',
+          address: '456 Oak Avenue',
+          description: 'Authentic Japanese sushi and sashimi'
+        },
+        {
+          id: '3',
+          name: 'Bella Vista Trattoria',
+          type: 'Restaurant',
+          cuisine: 'Italian',
+          rating: 4.6,
+          price: '$$',
+          distance: '1.2 miles away',
+          address: '789 Pine Street',
+          description: 'Family-owned Italian restaurant with homemade pasta'
+        }
+      ],
+      drinks: [
+        {
+          id: '4',
+          name: 'The Velvet Lounge',
+          type: 'Cocktail Bar',
+          cuisine: 'Craft Cocktails',
+          rating: 4.4,
+          price: '$$',
+          distance: '0.5 miles away',
+          address: '321 Elm Street',
+          description: 'Sophisticated cocktail bar with artisanal drinks'
+        },
+        {
+          id: '5',
+          name: 'Hops & Grains',
+          type: 'Brewery',
+          cuisine: 'Craft Beer',
+          rating: 4.3,
+          price: '$',
+          distance: '0.9 miles away',
+          address: '654 Maple Drive',
+          description: 'Local brewery with food trucks and live music'
+        },
+        {
+          id: '6',
+          name: 'Skyline Rooftop',
+          type: 'Rooftop Bar',
+          cuisine: 'Wine & Cocktails',
+          rating: 4.8,
+          price: '$$$',
+          distance: '1.1 miles away',
+          address: '987 Hilltop Road',
+          description: 'Rooftop bar with panoramic city views'
+        }
+      ],
+      coffee: [
+        {
+          id: '7',
+          name: 'Brew & Bean',
+          type: 'Coffee Shop',
+          cuisine: 'Artisan Coffee',
+          rating: 4.6,
+          price: '$',
+          distance: '0.2 miles away',
+          address: '147 Coffee Lane',
+          description: 'Third-wave coffee shop with house-roasted beans'
+        },
+        {
+          id: '8',
+          name: 'The Daily Grind',
+          type: 'Café',
+          cuisine: 'Coffee & Pastries',
+          rating: 4.4,
+          price: '$',
+          distance: '0.6 miles away',
+          address: '258 Bakery Street',
+          description: 'Cozy café with fresh pastries and specialty drinks'
+        },
+        {
+          id: '9',
+          name: 'Urban Roast',
+          type: 'Coffee Roastery',
+          cuisine: 'Premium Coffee',
+          rating: 4.7,
+          price: '$$',
+          distance: '1.0 miles away',
+          address: '369 Roast Way',
+          description: 'Coffee roastery with tasting room and light bites'
+        }
+      ],
+      activity: [
+        {
+          id: '10',
+          name: 'Adventure Zone',
+          type: 'Entertainment Center',
+          cuisine: 'Activities',
+          rating: 4.5,
+          price: '$$',
+          distance: '0.4 miles away',
+          address: '741 Fun Street',
+          description: 'Indoor rock climbing, escape rooms, and arcade games'
+        },
+        {
+          id: '11',
+          name: 'Riverside Park',
+          type: 'Outdoor Recreation',
+          cuisine: 'Nature',
+          rating: 4.6,
+          price: '$',
+          distance: '0.7 miles away',
+          address: '852 River Road',
+          description: 'Scenic park with hiking trails and picnic areas'
+        },
+        {
+          id: '12',
+          name: 'Creative Studio',
+          type: 'Art Workshop',
+          cuisine: 'Creative',
+          rating: 4.3,
+          price: '$$',
+          distance: '1.3 miles away',
+          address: '963 Art Avenue',
+          description: 'Art classes, pottery, and creative workshops'
+        }
+      ]
+    }
+    
+    return venues[activityType] || venues.activity
+  }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
-      year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      year: 'numeric'
     })
   }
 
   const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':')
-    const hour = parseInt(hours)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const displayHour = hour % 12 || 12
-    return `${displayHour}:${minutes} ${ampm}`
-  }
-
-  const getActivityIcon = (type: string) => {
-    const icons: { [key: string]: string } = {
-      dinner: '🍽️',
-      drinks: '🍸',
-      coffee: '☕',
-      activity: '🎯'
-    }
-    return icons[type] || '🎯'
-  }
-
-  const getActivityLabel = (type: string) => {
-    const labels: { [key: string]: string } = {
-      dinner: 'Dinner',
-      drinks: 'Drinks',
-      coffee: 'Coffee',
-      activity: 'Activity'
-    }
-    return labels[type] || 'Activity'
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
   }
 
   if (loading) {
@@ -96,108 +351,248 @@ export default function PlanDetailsPage() {
   }
 
   if (!plan) {
-    return null
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-600 dark:text-slate-300">Plan not found</p>
+          <Button onClick={() => router.push('/dashboard')} className="mt-4">
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/create')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Create
-          </Button>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Edit className="w-4 h-4" />
-              Edit Plan
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Share2 className="w-4 h-4" />
-              Share
-            </Button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => router.push('/dashboard')}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
 
-        {/* Plan Title */}
+        {/* Plan Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            {plan.eventName}
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            {plan.name}
           </h1>
-          <p className="text-slate-600 dark:text-slate-300 text-lg">
-            Created on {new Date(plan.createdAt).toLocaleDateString()}
-          </p>
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            {plan.activity_type}
+          </Badge>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Main Plan Details */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Event Details Card */}
-            <Card className="shadow-lg">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Plan Details */}
+          <div className="lg:col-span-2">
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5" />
                   Event Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-slate-500" />
-                    <div>
-                      <p className="font-medium">Date</p>
-                      <p className="text-slate-600 dark:text-slate-300">{formatDate(plan.date)}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-slate-500" />
-                    <div>
-                      <p className="font-medium">Time</p>
-                      <p className="text-slate-600 dark:text-slate-300">{formatTime(plan.time)}</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium">{formatDate(plan.date)}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Date</p>
                   </div>
                 </div>
-                
-                <Separator />
-                
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{getActivityIcon(plan.activityType)}</span>
+                  <Clock className="w-5 h-5 text-green-600" />
                   <div>
-                    <p className="font-medium">Activity Type</p>
-                    <p className="text-slate-600 dark:text-slate-300">{getActivityLabel(plan.activityType)}</p>
+                    <p className="font-medium">{formatTime(plan.time)}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Time</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <p className="font-medium">Location TBD</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Venue</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Participants Card */}
-            <Card className="shadow-lg">
+            {/* RSVP Section */}
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-green-600" />
-                  Participants ({plan.participants.length})
+                  <Users className="w-5 h-5" />
+                  RSVP
                 </CardTitle>
                 <CardDescription>
-                  People invited to this event
+                  Let us know if you're coming to this event
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {plan.participants.map((email, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="px-3 py-2 text-sm"
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <Button
+                    variant={currentUserRSVP === 'going' ? 'default' : 'outline'}
+                    onClick={() => handleRSVP('going')}
+                    className="flex flex-col items-center gap-2 py-6"
+                  >
+                    <CheckCircle className="w-6 h-6" />
+                    <span>I'm Going</span>
+                    <Badge variant="secondary">{rsvpCounts.going}</Badge>
+                  </Button>
+                  <Button
+                    variant={currentUserRSVP === 'maybe' ? 'default' : 'outline'}
+                    onClick={() => handleRSVP('maybe')}
+                    className="flex flex-col items-center gap-2 py-6"
+                  >
+                    <span className="text-lg">🤔</span>
+                    <span>Maybe</span>
+                    <Badge variant="secondary">{rsvpCounts.maybe}</Badge>
+                  </Button>
+                  <Button
+                    variant={currentUserRSVP === 'not_going' ? 'default' : 'outline'}
+                    onClick={() => handleRSVP('not_going')}
+                    className="flex flex-col items-center gap-2 py-6"
+                  >
+                    <XCircle className="w-6 h-6" />
+                    <span>Can't Make It</span>
+                    <Badge variant="secondary">{rsvpCounts.not_going}</Badge>
+                  </Button>
+                </div>
+
+                {currentUserRSVP && (
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-green-800 dark:text-green-200 font-medium">
+                      You're {currentUserRSVP === 'going' ? 'going' : currentUserRSVP === 'maybe' ? 'maybe going' : 'not going'} to this event!
+                    </p>
+                  </div>
+                )}
+
+                {/* Send Invites Section */}
+                <div className="mt-6 pt-6 border-t space-y-3">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleCopyInviteLink}
+                      variant="outline"
+                      className="flex-1 flex items-center gap-2"
                     >
-                      {email}
-                    </Badge>
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-600" />
+                          Link Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4" />
+                          Copy Link
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      onClick={sendSMSInvites}
+                      disabled={isSendingSMS}
+                      variant="default"
+                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      {isSendingSMS ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          📱 Send SMS
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                    Copy the link or send professional SMS invites
+                  </p>
+
+                  {/* SMS Results */}
+                  {smsResults && (
+                    <div className={`p-3 rounded-lg text-sm ${
+                      smsResults.error 
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200' 
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+                    }`}>
+                      {smsResults.error ? (
+                        <p>❌ SMS failed: {smsResults.error}</p>
+                      ) : (
+                        <div>
+                          <p className="font-medium">✅ SMS sent successfully!</p>
+                          <p className="text-xs mt-1">
+                            {smsResults.summary.successful} of {smsResults.summary.total} messages delivered
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Suggested Venues */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-purple-600" />
+                  Suggested Venues
+                </CardTitle>
+                <CardDescription>
+                  Great places for your {plan.activity_type} event
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getSuggestedVenues(plan.activity_type).map((venue) => (
+                    <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-purple-300 dark:hover:border-purple-600">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Venue Header */}
+                          <div>
+                            <h4 className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-2">
+                              {venue.name}
+                            </h4>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {venue.type} • {venue.cuisine || venue.type}
+                            </p>
+                          </div>
+
+                          {/* Rating and Price */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {venue.rating}
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="text-xs px-2 py-1">
+                              {venue.price}
+                            </Badge>
+                          </div>
+
+                          {/* Distance */}
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-500" />
+                            <span className="text-xs text-slate-600 dark:text-slate-400">
+                              {venue.distance}
+                            </span>
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                            {venue.description}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </CardContent>
@@ -206,36 +601,72 @@ export default function PlanDetailsPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card className="shadow-lg">
+            {/* RSVP Summary */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
+                <CardTitle className="text-lg">RSVP Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full" variant="outline">
-                  Send Invites
-                </Button>
-                <Button className="w-full" variant="outline">
-                  Add to Calendar
-                </Button>
-                <Button className="w-full" variant="outline">
-                  Export Details
-                </Button>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    Going
+                  </span>
+                  <Badge variant="secondary">{rsvpCounts.going}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg">🤔</span>
+                    Maybe
+                  </span>
+                  <Badge variant="secondary">{rsvpCounts.maybe}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    Not Going
+                  </span>
+                  <Badge variant="secondary">{rsvpCounts.not_going}</Badge>
+                </div>
+                <div className="pt-3 border-t">
+                  <div className="flex justify-between items-center font-medium">
+                    <span>Total Responses</span>
+                    <Badge variant="outline">
+                      {rsvpCounts.going + rsvpCounts.maybe + rsvpCounts.not_going}
+                    </Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Plan Status */}
-            <Card className="shadow-lg">
+            {/* Event Info */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Status</CardTitle>
+                <CardTitle className="text-lg">Event Info</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                  Active Plan
-                </Badge>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                  This plan is ready and waiting for participants
-                </p>
+              <CardContent className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium">Created</p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {new Date(plan.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">Event ID</p>
+                  <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
+                    {plan.id}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">Share Code</p>
+                  <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
+                    {planId}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
