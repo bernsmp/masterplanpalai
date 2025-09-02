@@ -8,15 +8,26 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Mail, User } from "lucide-react"
+import VenueDetailsComponent from "@/components/venue-details"
 // import { supabase } from "@/lib/supabase" // Temporarily disabled
 
 interface Plan {
   id: string
-  eventName: string
+  eventName?: string
+  name?: string
   date: string
   time: string
-  activityType: string
-  createdAt: string
+  activityType?: string
+  activity_type?: string
+  location?: {
+    lat: number
+    lng: number
+    name: string
+  }
+  venue?: any
+  participants?: Array<{ email: string; phone?: string }>
+  createdAt?: string
+  created_at?: string
 }
 
 interface RSVP {
@@ -385,11 +396,19 @@ export default function JoinPage() {
         {/* Event Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {plan.eventName}
+            {plan.eventName || plan.name}
           </h1>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {plan.activityType}
-          </Badge>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {plan.activityType || plan.activity_type}
+            </Badge>
+            {plan.location && (
+              <Badge variant="outline" className="text-lg px-4 py-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                {plan.location.name}
+              </Badge>
+            )}
+          </div>
           <p className="text-slate-600 dark:text-slate-400 mt-2">
             You've been invited to this event!
           </p>
@@ -580,20 +599,32 @@ export default function JoinPage() {
               </CardContent>
             </Card>
 
-            {/* Suggested Venues */}
+            {/* Venue Information */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-[#ffb829]" />
-                  Suggested Venues
+                  {plan.venue ? 'Selected Venue' : 'Suggested Venues'}
                 </CardTitle>
                 <CardDescription>
-                  Great places for your {plan.activityType} event
+                  {plan.venue 
+                    ? 'The venue chosen for this event'
+                    : `Great places for your ${plan.activityType || plan.activity_type} event`
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getSuggestedVenues(plan.activityType).map((venue) => (
+                {plan.venue ? (
+                  /* Selected Venue Display */
+                  <VenueDetailsComponent 
+                    venue={plan.venue} 
+                    showFullDetails={true}
+                    className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
+                  />
+                ) : (
+                  /* Fallback to Suggested Venues */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getSuggestedVenues(plan.activityType || plan.activity_type).map((venue) => (
                     <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
                       <CardContent className="p-4">
                         <div className="space-y-3">
@@ -636,7 +667,8 @@ export default function JoinPage() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

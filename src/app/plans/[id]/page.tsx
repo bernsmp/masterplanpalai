@@ -7,14 +7,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Share2, Edit, Check } from "lucide-react"
+import VenueDetailsComponent from "@/components/venue-details"
 
 interface Plan {
   id: string
-  name: string
+  eventName?: string
+  name?: string
   date: string
   time: string
-  activity_type: string
-  created_at: string
+  activityType?: string
+  activity_type?: string
+  location?: {
+    lat: number
+    lng: number
+    name: string
+  }
+  venue?: any
+  participants?: Array<{ email: string; phone?: string }>
+  createdAt?: string
+  created_at?: string
 }
 
 interface RSVP {
@@ -379,11 +390,19 @@ export default function PlanDetailsPage() {
         {/* Plan Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {plan.name}
+            {plan.eventName || plan.name}
           </h1>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {plan.activity_type}
-          </Badge>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {plan.activityType || plan.activity_type}
+            </Badge>
+            {plan.location && (
+              <Badge variant="outline" className="text-lg px-4 py-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                {plan.location.name}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -538,63 +557,76 @@ export default function PlanDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Suggested Venues */}
+            {/* Venue Information */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-[#ffb829]" />
-                  Suggested Venues
+                  {plan.venue ? 'Selected Venue' : 'Suggested Venues'}
                 </CardTitle>
                 <CardDescription>
-                  Great places for your {plan.activity_type} event
+                  {plan.venue 
+                    ? 'The venue chosen for this event'
+                    : `Great places for your ${plan.activityType || plan.activity_type} event`
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getSuggestedVenues(plan.activity_type).map((venue) => (
-                    <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          {/* Venue Header */}
-                          <div>
-                            <h4 className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-2">
-                              {venue.name}
-                            </h4>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {venue.type} • {venue.cuisine || venue.type}
-                            </p>
-                          </div>
+                {plan.venue ? (
+                  /* Selected Venue Display */
+                  <VenueDetailsComponent 
+                    venue={plan.venue} 
+                    showFullDetails={true}
+                    className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
+                  />
+                ) : (
+                  /* Fallback to Suggested Venues */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getSuggestedVenues(plan.activityType || plan.activity_type).map((venue) => (
+                      <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {/* Venue Header */}
+                            <div>
+                              <h4 className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-2">
+                                {venue.name}
+                              </h4>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                {venue.type} • {venue.cuisine || venue.type}
+                              </p>
+                            </div>
 
-                          {/* Rating and Price */}
-                          <div className="flex items-center justify-between">
+                            {/* Rating and Price */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                  {venue.rating}
+                                </span>
+                              </div>
+                              <Badge variant="outline" className="text-xs px-2 py-1">
+                                {venue.price}
+                              </Badge>
+                            </div>
+
+                            {/* Distance */}
                             <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                {venue.rating}
+                              <MapPin className="w-3 h-3 text-slate-500" />
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {venue.distance}
                               </span>
                             </div>
-                            <Badge variant="outline" className="text-xs px-2 py-1">
-                              {venue.price}
-                            </Badge>
-                          </div>
 
-                          {/* Distance */}
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-500" />
-                            <span className="text-xs text-slate-600 dark:text-slate-400">
-                              {venue.distance}
-                            </span>
+                            {/* Description */}
+                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                              {venue.description}
+                            </p>
                           </div>
-
-                          {/* Description */}
-                          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                            {venue.description}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

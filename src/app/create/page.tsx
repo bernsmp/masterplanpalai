@@ -12,6 +12,9 @@ import { Separator } from "@/components/ui/separator"
 import { Toast } from "@/components/ui/toast"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Calendar, Clock, Users, Plus, X, MapPin, Sparkles } from "lucide-react"
+import LocationSearch from "@/components/location-search"
+import VenueRecommendations from "@/components/venue-recommendations"
+import WeatherService from "@/components/weather-service"
 
 export default function CreatePlanPage() {
   const router = useRouter()
@@ -20,6 +23,8 @@ export default function CreatePlanPage() {
     date: "",
     time: "",
     activityType: "",
+    location: null as { lat: number; lng: number; name: string } | null,
+    venue: null as any | null,
     participants: [] as Array<{ email: string; phone?: string }>
   })
 
@@ -28,6 +33,7 @@ export default function CreatePlanPage() {
   const [toastMessage, setToastMessage] = useState("")
   const [showTimeModal, setShowTimeModal] = useState(false)
   const [isSendingSMS, setIsSendingSMS] = useState(false)
+  const [weather, setWeather] = useState<any>(null)
 
   const activityTypes = [
     { value: "dinner", label: "Dinner", icon: "🍽️" },
@@ -162,6 +168,25 @@ export default function CreatePlanPage() {
     }))
   }
 
+  const handleLocationSelect = (location: any) => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        lat: location.geometry.location.lat,
+        lng: location.geometry.location.lng,
+        name: location.name
+      },
+      venue: null // Reset venue when location changes
+    }))
+  }
+
+  const handleVenueSelect = (venue: any) => {
+    setFormData(prev => ({
+      ...prev,
+      venue: venue
+    }))
+  }
+
   const sendSMSInvites = async (planId: string) => {
     const phoneNumbers = formData.participants
       .filter(p => p.phone && p.phone.trim())
@@ -241,7 +266,7 @@ export default function CreatePlanPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
@@ -252,19 +277,22 @@ export default function CreatePlanPage() {
           </p>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-[#ffb829]" />
-              Create a New Plan
-            </CardTitle>
-            <CardDescription>
-              Fill out the details below to create your perfect plan
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Form */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[#ffb829]" />
+                  Create a New Plan
+                </CardTitle>
+                <CardDescription>
+                  Fill out the details below to create your perfect plan
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
               {/* Event Name */}
               <div className="space-y-2">
                 <Label htmlFor="eventName">Event Name</Label>
@@ -405,6 +433,37 @@ export default function CreatePlanPage() {
                 </Select>
               </div>
 
+              {/* Location Selection */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#ffb829]" />
+                  <Label className="text-base font-medium">Location & Venue</Label>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Choose your preferred area and we'll suggest great venues nearby, or search for a specific venue.
+                </p>
+                
+                <LocationSearch
+                  onLocationSelect={handleLocationSelect}
+                  placeholder="Search for a city, neighborhood, or area..."
+                  label="Preferred Location"
+                  searchType="location"
+                />
+
+                {/* Custom Venue Search */}
+                {formData.location && (
+                  <div className="pt-2">
+                    <LocationSearch
+                      onVenueSelect={handleVenueSelect}
+                      placeholder="Or search for a specific venue..."
+                      label="Custom Venue Search"
+                      searchType="venue"
+                      activityType={formData.activityType}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Participants Section */}
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
@@ -495,41 +554,77 @@ export default function CreatePlanPage() {
                 )}
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
-                  size="lg"
-                >
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Create Plan
-                </Button>
+                  {/* Submit Button */}
+                  <div className="pt-4">
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
+                      size="lg"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Create Plan
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Venue Recommendations Sidebar */}
+          <div className="lg:col-span-1">
+            {formData.location && (
+              <div className="sticky top-6 space-y-4">
+                {/* Weather Service */}
+                <WeatherService
+                  location={formData.location}
+                  onWeatherChange={setWeather}
+                />
+                
+                {/* Venue Recommendations */}
+                {formData.activityType && (
+                  <VenueRecommendations
+                    location={formData.location}
+                    activityType={formData.activityType}
+                    onVenueSelect={handleVenueSelect}
+                    selectedVenue={formData.venue}
+                    weather={weather}
+                  />
+                )}
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        </div>
 
         {/* Preview Section */}
         {formData.eventName && (
-          <Card className="mt-6 shadow-md">
+          <Card className="mt-8 shadow-md">
             <CardHeader>
               <CardTitle className="text-lg">Plan Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm">
-                <p><strong>Event:</strong> {formData.eventName}</p>
-                {formData.date && <p><strong>Date:</strong> {formData.date}</p>}
-                {formData.time && <p><strong>Time:</strong> {formData.time}</p>}
-                {formData.activityType && (
-                  <p><strong>Type:</strong> {activityTypes.find(t => t.value === formData.activityType)?.label}</p>
-                )}
-                {formData.participants.length > 0 && (
-                  <p><strong>Participants:</strong> {formData.participants.length} people</p>
-                )}
-                {formData.participants.filter(p => p.phone).length > 0 && (
-                  <p><strong>SMS Invites:</strong> {formData.participants.filter(p => p.phone).length} phone numbers</p>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p><strong>Event:</strong> {formData.eventName}</p>
+                  {formData.date && <p><strong>Date:</strong> {formData.date}</p>}
+                  {formData.time && <p><strong>Time:</strong> {formData.time}</p>}
+                  {formData.activityType && (
+                    <p><strong>Type:</strong> {activityTypes.find(t => t.value === formData.activityType)?.label}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {formData.location && (
+                    <p><strong>Location:</strong> {formData.location.name}</p>
+                  )}
+                  {formData.venue && (
+                    <p><strong>Venue:</strong> {formData.venue.name}</p>
+                  )}
+                  {formData.participants.length > 0 && (
+                    <p><strong>Participants:</strong> {formData.participants.length} people</p>
+                  )}
+                  {formData.participants.filter(p => p.phone).length > 0 && (
+                    <p><strong>SMS Invites:</strong> {formData.participants.filter(p => p.phone).length} phone numbers</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
