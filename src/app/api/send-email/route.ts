@@ -1,8 +1,6 @@
 import { Resend } from 'resend';
 import { NextRequest, NextResponse } from 'next/server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface EmailRequest {
   to: string;
   eventName: string;
@@ -21,6 +19,16 @@ interface EmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.RESEND_API_KEY;
+    
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Resend API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
     const body: EmailRequest = await request.json();
     const { to, eventName, date, time, location, venue, shareCode, organizerName } = body;
 
