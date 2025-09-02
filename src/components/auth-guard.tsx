@@ -28,7 +28,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [])
 
   const handleLogin = (password: string) => {
-    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
+    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'test123'
     
     // Debug logging
     console.log('Entered password:', password)
