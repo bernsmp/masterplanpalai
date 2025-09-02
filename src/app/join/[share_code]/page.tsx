@@ -3,24 +3,27 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Share2, Edit, Check } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Mail, User } from "lucide-react"
+// import { supabase } from "@/lib/supabase" // Temporarily disabled
 
 interface Plan {
   id: string
-  name: string
+  eventName: string
   date: string
   time: string
-  activity_type: string
-  created_at: string
+  activityType: string
+  createdAt: string
 }
 
 interface RSVP {
   id: string
   plan_id: string
-  user_id: string
+  user_email: string
+  user_name: string
   status: 'going' | 'not_going' | 'maybe'
   created_at: string
 }
@@ -37,141 +40,142 @@ interface Venue {
   description: string
 }
 
-export default function PlanDetailsPage() {
+export default function JoinPage() {
   const params = useParams()
   const router = useRouter()
-  const planId = params.id as string
+  const shareCode = params.share_code as string
   
   const [plan, setPlan] = useState<Plan | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [rsvpCounts, setRsvpCounts] = useState({
     going: 0,
     not_going: 0,
     maybe: 0
   })
-  const [copied, setCopied] = useState(false)
-  const [isSendingSMS, setIsSendingSMS] = useState(false)
-  const [smsResults, setSmsResults] = useState<any>(null)
+  
+  // Form state for new RSVP
+  const [userName, setUserName] = useState("")
+  const [userEmail, setUserEmail] = useState("")
+  const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    // Mock data for development since supabase was deleted
-    const mockPlan: Plan = {
-      id: planId,
-      name: "Sample Event",
-      date: "2024-01-15",
-      time: "19:00",
-      activity_type: "dinner",
-      created_at: new Date().toISOString()
+    const fetchPlanAndRSVPs = () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch plans from localStorage
+        const plansData = localStorage.getItem('plans')
+        if (!plansData) {
+          setError('Event not found')
+          return
+        }
+
+        const plans = JSON.parse(plansData)
+        const planData = plans.find((p: any) => p.id === shareCode)
+
+        if (!planData) {
+          setError('Event not found')
+          return
+        }
+
+        setPlan(planData)
+
+        // Fetch RSVPs from localStorage
+        const rsvpsData = localStorage.getItem('rsvps')
+        const rsvpsList = rsvpsData ? JSON.parse(rsvpsData).filter((r: RSVP) => r.plan_id === shareCode) : []
+        setRsvps(rsvpsList)
+
+        // Calculate counts
+        const counts = {
+          going: rsvpsList.filter((r: RSVP) => r.status === 'going').length,
+          not_going: rsvpsList.filter((r: RSVP) => r.status === 'not_going').length,
+          maybe: rsvpsList.filter((r: RSVP) => r.status === 'maybe').length
+        }
+        setRsvpCounts(counts)
+
+        // Check if current user has RSVP'd (by email)
+        const userRSVP = rsvpsList.find((r: RSVP) => r.user_email === userEmail)
+        if (userRSVP) {
+          setCurrentUserRSVP(userRSVP.status)
+          setUserName(userRSVP.user_name)
+        }
+
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        setError('Failed to load event details')
+      } finally {
+        setLoading(false)
+      }
     }
+
+    if (shareCode) {
+      fetchPlanAndRSVPs()
+    }
+  }, [shareCode, userEmail])
+
+  const handleRSVP = (status: 'going' | 'not_going' | 'maybe') => {
+    if (!userName.trim() || !userEmail.trim()) {
+      alert("Please enter your name and email first")
+      return
+    }
+
+    setIsSubmitting(true)
     
-    setPlan(mockPlan)
-    setLoading(false)
-  }, [planId])
-
-  const handleRSVP = async (status: 'going' | 'not_going' | 'maybe') => {
     try {
-      const userId = 'test-user' // Hardcoded for development
-
+      // Get existing RSVPs from localStorage
+      const rsvpsData = localStorage.getItem('rsvps')
+      const allRsvps = rsvpsData ? JSON.parse(rsvpsData) : []
+      
       // Check if user already has an RSVP
-      const existingRSVP = rsvps.find((r: RSVP) => r.user_id === userId)
+      const existingRSVP = allRsvps.find((r: RSVP) => r.user_email === userEmail && r.plan_id === shareCode)
 
       if (existingRSVP) {
         // Update existing RSVP
-        setRsvps(prev => prev.map((r: RSVP) => 
-          r.id === existingRSVP.id ? { ...r, status } : r
-        ))
+        const updatedRsvps = allRsvps.map((r: RSVP) => 
+          r.user_email === userEmail && r.plan_id === shareCode 
+            ? { ...r, status, user_name: userName, created_at: new Date().toISOString() }
+            : r
+        )
+        localStorage.setItem('rsvps', JSON.stringify(updatedRsvps))
       } else {
         // Create new RSVP
         const newRSVP: RSVP = {
-          id: `rsvp_${Date.now()}`,
-          plan_id: planId,
-          user_id: userId,
+          id: `rsvp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          plan_id: shareCode,
+          user_email: userEmail,
+          user_name: userName,
           status,
           created_at: new Date().toISOString()
         }
         
-        setRsvps(prev => [...prev, newRSVP])
+        const updatedRsvps = [...allRsvps, newRSVP]
+        localStorage.setItem('rsvps', JSON.stringify(updatedRsvps))
       }
 
-      // Update counts
-      const newCounts = {
-        going: rsvps.filter((r: RSVP) => r.status === 'going').length + (status === 'going' ? 1 : 0),
-        not_going: rsvps.filter((r: RSVP) => r.status === 'not_going').length + (status === 'not_going' ? 1 : 0),
-        maybe: rsvps.filter((r: RSVP) => r.status === 'maybe').length + (status === 'maybe' ? 1 : 0)
+      // Update local state
+      const updatedRsvps = JSON.parse(localStorage.getItem('rsvps') || '[]')
+      const planRsvps = updatedRsvps.filter((r: RSVP) => r.plan_id === shareCode)
+      setRsvps(planRsvps)
+
+      // Calculate counts
+      const counts = {
+        going: planRsvps.filter((r: RSVP) => r.status === 'going').length,
+        not_going: planRsvps.filter((r: RSVP) => r.status === 'not_going').length,
+        maybe: planRsvps.filter((r: RSVP) => r.status === 'maybe').length
       }
-      setRsvpCounts(newCounts)
+      setRsvpCounts(counts)
 
       setCurrentUserRSVP(status)
+      
     } catch (error) {
       console.error('Error updating RSVP:', error)
-    }
-  }
-
-  const handleCopyInviteLink = async () => {
-    const shareCode = planId
-    const inviteLink = `${window.location.origin}/join/${shareCode}`
-    
-    try {
-      await navigator.clipboard.writeText(inviteLink)
-      setCopied(true)
-      
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea')
-      textArea.value = inviteLink
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
-  const sendSMSInvites = async () => {
-    if (!plan) return
-
-    setIsSendingSMS(true)
-    setSmsResults(null)
-    
-    try {
-      const inviteLink = `${window.location.origin}/join/${planId}`
-      const message = `🎉 You're invited to: ${plan.name}\n📅 ${plan.date} at ${plan.time}\n📍 ${plan.activity_type}\n\nJoin here: ${inviteLink}\n\nSent via PlanPal AI`
-
-      // For now, we'll use a mock phone number since we don't have the plan's phone numbers
-      // In a real app, you'd get these from the plan data
-      const mockPhoneNumbers = ['+15551234567'] // This would come from plan.phoneNumbers
-
-      const response = await fetch('/api/send-sms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phoneNumbers: mockPhoneNumbers,
-          message
-        })
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setSmsResults(result)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 4000)
-      } else {
-        throw new Error(result.error || 'Failed to send SMS')
-      }
-    } catch (error: any) {
-      console.error('SMS error:', error)
-      setSmsResults({ error: error.message })
+      alert('Failed to save RSVP. Please try again.')
     } finally {
-      setIsSendingSMS(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -344,19 +348,21 @@ export default function PlanDetailsPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading plan details...</p>
+          <p className="text-slate-600 dark:text-slate-300">Loading event details...</p>
         </div>
       </div>
     )
   }
 
-  if (!plan) {
+  if (error || !plan) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-slate-300">Plan not found</p>
-          <Button onClick={() => router.push('/dashboard')} className="mt-4">
-            Back to Dashboard
+          <p className="text-slate-600 dark:text-slate-300 mb-4">
+            {error || 'Event not found'}
+          </p>
+          <Button onClick={() => router.push('/')} className="mt-4">
+            Back to Home
           </Button>
         </div>
       </div>
@@ -369,26 +375,30 @@ export default function PlanDetailsPage() {
         {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/')}
           className="mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Back to Home
         </Button>
 
-        {/* Plan Header */}
+        {/* Event Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {plan.name}
+            {plan.eventName}
           </h1>
           <Badge variant="secondary" className="text-lg px-4 py-2">
-            {plan.activity_type}
+            {plan.activityType}
           </Badge>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+            You've been invited to this event!
+          </p>
         </div>
 
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Plan Details */}
+          {/* Main Content */}
           <div className="lg:col-span-2">
+            {/* Event Details */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -421,22 +431,111 @@ export default function PlanDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* RSVP Section */}
+            {/* Participants */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  RSVP
+                  Participants ({rsvps.length})
                 </CardTitle>
                 <CardDescription>
-                  Let us know if you're coming to this event
+                  People who have responded to this event
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                {rsvps.length > 0 ? (
+                  <div className="space-y-3">
+                    {rsvps.map((rsvp) => (
+                      <div key={rsvp.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              {rsvp.user_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {rsvp.user_name}
+                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {rsvp.user_email}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={
+                            rsvp.status === 'going' ? 'default' : 
+                            rsvp.status === 'maybe' ? 'secondary' : 'destructive'
+                          }
+                        >
+                          {rsvp.status === 'going' ? 'Going' : 
+                           rsvp.status === 'maybe' ? 'Maybe' : 'Not Going'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No responses yet</p>
+                    <p className="text-sm">Be the first to RSVP!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* RSVP Form */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  RSVP to this Event
+                </CardTitle>
+                <CardDescription>
+                  Let us know if you're coming by entering your details below
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* User Info Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Your Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your name"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Your Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* RSVP Buttons */}
+                <div className="grid grid-cols-3 gap-4">
                   <Button
                     variant={currentUserRSVP === 'going' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('going')}
+                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <CheckCircle className="w-6 h-6" />
@@ -446,6 +545,7 @@ export default function PlanDetailsPage() {
                   <Button
                     variant={currentUserRSVP === 'maybe' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('maybe')}
+                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <span className="text-lg">🤔</span>
@@ -455,6 +555,7 @@ export default function PlanDetailsPage() {
                   <Button
                     variant={currentUserRSVP === 'not_going' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('not_going')}
+                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <XCircle className="w-6 h-6" />
@@ -466,75 +567,16 @@ export default function PlanDetailsPage() {
                 {currentUserRSVP && (
                   <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <p className="text-green-800 dark:text-green-200 font-medium">
-                      You're {currentUserRSVP === 'going' ? 'going' : currentUserRSVP === 'maybe' ? 'maybe going' : 'not going'} to this event!
+                      Thanks {userName}! You're {currentUserRSVP === 'going' ? 'going' : currentUserRSVP === 'maybe' ? 'maybe going' : 'not going'} to this event!
                     </p>
                   </div>
                 )}
 
-                {/* Send Invites Section */}
-                <div className="mt-6 pt-6 border-t space-y-3">
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleCopyInviteLink}
-                      variant="outline"
-                      className="flex-1 flex items-center gap-2"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-600" />
-                          Link Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-4 h-4" />
-                          Copy Link
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button
-                      onClick={sendSMSInvites}
-                      disabled={isSendingSMS}
-                      variant="default"
-                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      {isSendingSMS ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          📱 Send SMS
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                    Copy the link or send professional SMS invites
+                {(!userName.trim() || !userEmail.trim()) && (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+                    Please enter your name and email to RSVP
                   </p>
-
-                  {/* SMS Results */}
-                  {smsResults && (
-                    <div className={`p-3 rounded-lg text-sm ${
-                      smsResults.error 
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200' 
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
-                    }`}>
-                      {smsResults.error ? (
-                        <p>❌ SMS failed: {smsResults.error}</p>
-                      ) : (
-                        <div>
-                          <p className="font-medium">✅ SMS sent successfully!</p>
-                          <p className="text-xs mt-1">
-                            {smsResults.summary.successful} of {smsResults.summary.total} messages delivered
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -546,12 +588,12 @@ export default function PlanDetailsPage() {
                   Suggested Venues
                 </CardTitle>
                 <CardDescription>
-                  Great places for your {plan.activity_type} event
+                  Great places for your {plan.activityType} event
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getSuggestedVenues(plan.activity_type).map((venue) => (
+                  {getSuggestedVenues(plan.activityType).map((venue) => (
                     <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-purple-300 dark:hover:border-purple-600">
                       <CardContent className="p-4">
                         <div className="space-y-3">
@@ -622,7 +664,7 @@ export default function PlanDetailsPage() {
                   <Badge variant="secondary">{rsvpCounts.maybe}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-2">
+                  <span className="flex justify-between items-center">
                     <XCircle className="w-4 h-4 text-red-600" />
                     Not Going
                   </span>
@@ -648,7 +690,7 @@ export default function PlanDetailsPage() {
                 <div>
                   <p className="font-medium">Created</p>
                   <p className="text-slate-600 dark:text-slate-400">
-                    {new Date(plan.created_at).toLocaleDateString('en-US', {
+                    {new Date(plan.createdAt).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'
@@ -656,15 +698,29 @@ export default function PlanDetailsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-medium">Event ID</p>
-                  <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
-                    {plan.id}
-                  </p>
-                </div>
-                <div>
                   <p className="font-medium">Share Code</p>
                   <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
-                    {planId}
+                    {shareCode}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* How to Use */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">How to Use</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="space-y-2">
+                  <p className="text-slate-600 dark:text-slate-400">
+                    1. Enter your name and email above
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    2. Click one of the RSVP buttons
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    3. Your response will be saved
                   </p>
                 </div>
               </CardContent>
