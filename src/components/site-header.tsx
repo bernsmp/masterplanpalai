@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Zap, Bell, User } from "lucide-react"
+import { Zap, Bell, User, LogOut } from "lucide-react"
 
 export function SiteHeader() {
   return (
@@ -17,8 +17,16 @@ export function SiteHeader() {
           <Button variant="ghost" size="sm">
             <Bell className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm">
-            <User className="w-4 h-4" />
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              localStorage.removeItem('planpal_authenticated')
+              window.location.reload()
+            }}
+            title="Logout"
+          >
+            <LogOut className="w-4 h-4" />
           </Button>
         </div>
       </div>
