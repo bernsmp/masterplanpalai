@@ -41,6 +41,28 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-slide-up-fade: slide-up-fade 0.4s ease-out;
+
+  @keyframes slide-up-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes slide-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    }
+  }
 }
 
 :root {

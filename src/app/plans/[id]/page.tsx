@@ -343,7 +343,7 @@ export default function PlanDetailsPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ffb829] mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-300">Loading plan details...</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export default function PlanDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5 text-[#ffb829]" />
                   <div>
                     <p className="font-medium">{formatDate(plan.date)}</p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">Date</p>
@@ -412,7 +412,7 @@ export default function PlanDetailsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-purple-600" />
+                  <MapPin className="w-5 h-5 text-[#ffb829]" />
                   <div>
                     <p className="font-medium">Location TBD</p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">Venue</p>
@@ -496,7 +496,7 @@ export default function PlanDetailsPage() {
                       onClick={sendSMSInvites}
                       disabled={isSendingSMS}
                       variant="default"
-                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
                     >
                       {isSendingSMS ? (
                         <>
@@ -542,7 +542,7 @@ export default function PlanDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-purple-600" />
+                  <MapPin className="w-5 h-5 text-[#ffb829]" />
                   Suggested Venues
                 </CardTitle>
                 <CardDescription>
@@ -552,7 +552,7 @@ export default function PlanDetailsPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {getSuggestedVenues(plan.activity_type).map((venue) => (
-                    <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-purple-300 dark:hover:border-purple-600">
+                    <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           {/* Venue Header */}

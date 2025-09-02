@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { HeroPill } from '@/components/ui/hero-pill'
 import { ArrowRight, Calendar, Users, MessageSquare, MapPin, Zap } from 'lucide-react'
 
 export default function Home() {
@@ -11,7 +12,7 @@ export default function Home() {
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#ffb829] to-[#e6a025] rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-slate-900 dark:text-white">PlanPal AI</span>
@@ -25,13 +26,15 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-4xl mx-auto">
-          <Badge variant="outline" className="mb-6 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-            🚀 5 Day Sprint Framework Installed
-          </Badge>
+
+          <HeroPill 
+            text="⚡️ Exclusive for Smart Solutions Subscribers"
+            className="mb-6 [&>p]:!bg-[#ffb829] [&>p]:!text-black [&>p]:!dark:bg-[#ffb829] [&>p]:!dark:text-black"
+          />
           
           <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6">
             Welcome to{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] bg-clip-text text-transparent">
               PlanPal AI
             </span>
           </h1>
@@ -41,7 +44,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+            <Button asChild size="lg" className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
               <Link href="/create">
                 Create New Plan
                 <ArrowRight className="ml-2 w-4 h-4" />
@@ -71,8 +74,8 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Smart Scheduling</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -83,8 +86,8 @@ export default function Home() {
 
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <MapPin className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <MapPin className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Venue Discovery</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -95,8 +98,8 @@ export default function Home() {
 
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <MessageSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Group Coordination</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -107,8 +110,8 @@ export default function Home() {
 
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Social Intelligence</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -119,8 +122,8 @@ export default function Home() {
 
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <Zap className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <Zap className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Instant Execution</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -131,8 +134,8 @@ export default function Home() {
 
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
               <CardHeader>
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center mb-4">
-                  <Calendar className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
                 </div>
                 <CardTitle className="text-slate-900 dark:text-white">Calendar Integration</CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-300">
@@ -153,24 +156,24 @@ export default function Home() {
           
           <div className="grid md:grid-cols-3 gap-8 mb-12">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
+              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">1</span>
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Project Discussion</h3>
               <p className="text-slate-600 dark:text-slate-300">Define features and requirements</p>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">2</span>
+              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">2</span>
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Feature Building</h3>
               <p className="text-slate-600 dark:text-slate-300">Implement with shadcn/ui ecosystem</p>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-green-600 dark:text-green-400">3</span>
+              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">3</span>
               </div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Deployment</h3>
               <p className="text-slate-600 dark:text-slate-300">Test locally, then deploy to Vercel</p>
