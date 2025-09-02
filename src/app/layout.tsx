@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'PlanPal AI',
     images: [
       {
-        url: '/og-image.png',
+        url: '/smarter-solutions-logo.png',
         width: 1200,
         height: 630,
         alt: 'PlanPal AI - Smart Planning Assistant for Group Coordination',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "PlanPal AI - Smart Planning Assistant",
     description: "An AI planning assistant that acts like your group's most organized friend—the one who actually remembers everyone's schedules, knows all the good spots, and somehow makes plans happen without the endless group chat chaos.",
-    images: ['/og-image.png'],
+    images: ['/smarter-solutions-logo.png'],
     creator: '@planpalai',
   },
   robots: {
