@@ -15,8 +15,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     // Check if user is authenticated
     const authStatus = localStorage.getItem('planpal_authenticated')
+    console.log('Auth status from localStorage:', authStatus)
+    console.log('Environment variable in useEffect:', process.env.NEXT_PUBLIC_APP_PASSWORD)
+    
     if (authStatus === 'true') {
+      console.log('User is authenticated, setting isAuthenticated to true')
       setIsAuthenticated(true)
+    } else {
+      console.log('User is not authenticated, showing login form')
     }
     setIsLoading(false)
   }, [])
@@ -24,11 +30,17 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const handleLogin = (password: string) => {
     const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
     
+    // Debug logging
+    console.log('Entered password:', password)
+    console.log('Expected password:', correctPassword)
+    console.log('Environment variable:', process.env.NEXT_PUBLIC_APP_PASSWORD)
+    console.log('Password match:', password === correctPassword)
+    
     if (password === correctPassword) {
       localStorage.setItem('planpal_authenticated', 'true')
       setIsAuthenticated(true)
     } else {
-      alert('Incorrect password. Please try again.')
+      alert(`Incorrect password. Please try again. (Debug: Expected "${correctPassword}", Got "${password}")`)
     }
   }
 
