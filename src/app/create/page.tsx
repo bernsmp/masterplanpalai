@@ -238,7 +238,7 @@ export default function CreatePlanPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <Calendar className="w-5 h-5 text-[#ffb829]" />
               Create a New Plan
             </CardTitle>
             <CardDescription>
@@ -281,7 +281,7 @@ export default function CreatePlanPage() {
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-blue-600" />
+                          <Sparkles className="w-5 h-5 text-[#ffb829]" />
                           AI Time Suggestions
                         </DialogTitle>
                         <DialogDescription>
@@ -293,7 +293,7 @@ export default function CreatePlanPage() {
                         {timeSuggestions.map((suggestion) => (
                           <Card
                             key={suggestion.id}
-                            className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-300 dark:hover:border-blue-600"
+                            className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60"
                             onClick={() => handleTimeSuggestionSelect(suggestion)}
                           >
                             <CardContent className="p-4">
@@ -353,10 +353,10 @@ export default function CreatePlanPage() {
 
                 {/* Selected Time Indicator */}
                 {formData.date && formData.time && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="bg-[#ffb829]/10 dark:bg-[#ffb829]/20 border border-[#ffb829]/20 dark:border-[#ffb829]/40 rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      <Calendar className="w-4 h-4 text-[#ffb829] dark:text-[#ffb829]" />
+                      <span className="text-sm font-medium text-[#b8860b] dark:text-[#ffb829]">
                         Selected: {new Date(formData.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {formData.time}
                       </span>
                     </div>
@@ -504,7 +504,7 @@ export default function CreatePlanPage() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
                   size="lg"
                 >
                   <MapPin className="w-4 h-4 mr-2" />
