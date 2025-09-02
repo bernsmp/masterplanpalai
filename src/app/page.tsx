@@ -144,8 +144,18 @@ export default function Home() {
         </div>
       </section>
 
-
-
+                  {/* Smarter Solutions Certified Logo */}
+            <section className="container mx-auto px-4 py-12">
+              <div className="flex justify-end">
+                <Image
+                  src="/smarter-solutions-logo.png"
+                  alt="Smarter Solutions Certified"
+                  width={200}
+                  height={100}
+                  className="rounded-lg shadow-lg"
+                />
+              </div>
+            </section>
 
     </div>
   )
