@@ -170,8 +170,8 @@ export default function VenueRecommendations({
             place_id: place.id || '',
             name: place.displayName || '',
             formatted_address: place.formattedAddress || '',
-            rating: place.rating,
-            price_level: place.priceLevel,
+            rating: place.rating || undefined,
+            price_level: place.priceLevel ? Number(place.priceLevel) : undefined,
             types: place.types || [],
             geometry: {
               location: {

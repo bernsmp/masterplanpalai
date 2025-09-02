@@ -331,11 +331,10 @@ export default function MyPlansPage() {
 
         {/* Success Toast */}
         {showToast && (
-          <Toast
-            title="Success"
-            description={toastMessage}
-            className="fixed bottom-4 right-4 z-50"
-          />
+          <Toast className="fixed bottom-4 right-4 z-50">
+            <div className="font-semibold">Success</div>
+            <div className="text-sm opacity-90">{toastMessage}</div>
+          </Toast>
         )}
         </div>
       </div>

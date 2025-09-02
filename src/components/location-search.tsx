@@ -122,8 +122,8 @@ export default function LocationSearch({
             place_id: place.id || '',
             name: place.displayName || '',
             formatted_address: place.formattedAddress || '',
-            rating: place.rating,
-            price_level: place.priceLevel,
+            rating: place.rating || undefined,
+            price_level: place.priceLevel ? Number(place.priceLevel) : undefined,
             types: place.types || [],
             geometry: {
               location: {
@@ -148,7 +148,7 @@ export default function LocationSearch({
         document.createElement('div')
       )
 
-      const request: google.maps.places.PlaceSearchRequest = {
+      const request = {
         query: searchType === 'venue' && activityType 
           ? `${searchQuery} ${getActivityKeyword(activityType)}`
           : searchQuery,
