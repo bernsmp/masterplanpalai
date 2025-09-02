@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { HeroPill } from '@/components/ui/hero-pill'
 import { PhotoGallery } from '@/components/ui/gallery'
+import { BorderTrail } from '@/components/ui/border-trail'
+import { ParticleButton } from '@/components/ui/particle-button'
 import { ArrowRight, Calendar, Users, MessageSquare, MapPin, Zap } from 'lucide-react'
 
 export default function Home() {
@@ -61,7 +63,8 @@ export default function Home() {
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={0} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <Calendar className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
@@ -73,7 +76,8 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={0.5} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <MapPin className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
@@ -85,7 +89,8 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={1} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <MessageSquare className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
@@ -97,7 +102,8 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={1.5} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <Users className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
@@ -109,7 +115,8 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={2} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <Zap className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />
@@ -121,7 +128,8 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-slate-800/80 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 hover:bg-white/90 dark:hover:bg-slate-800/90 group">
+              <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={40} delay={2.5} />
               <CardHeader>
                 <div className="w-12 h-12 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-lg flex items-center justify-center mb-4">
                   <Calendar className="w-6 h-6 text-[#ffb829] dark:text-[#ffb829]" />

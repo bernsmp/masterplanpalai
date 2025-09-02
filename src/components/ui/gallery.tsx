@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ParticleButton } from "@/components/ui/particle-button";
 import { HeroPill } from "@/components/ui/hero-pill";
 
 export const PhotoGallery = ({
@@ -184,11 +185,11 @@ export const PhotoGallery = ({
         </motion.div>
       </div>
       <div className="flex w-full justify-center">
-      <Button asChild className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
+      <ParticleButton asChild className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
         <Link href="/create">
           Start Planning
         </Link>
-      </Button>
+      </ParticleButton>
       </div>
     </div>
   );
