@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthGuard from "@/components/auth-guard";
 
 export const metadata: Metadata = {
   title: "PlanPal AI - Smart Planning Assistant",
@@ -90,7 +91,9 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#ffb829" />
         <meta name="msapplication-TileImage" content="/favicon-192x192.png" />
       </head>
-      <body suppressHydrationWarning={true}>{children}</body>
+      <body suppressHydrationWarning={true}>
+        <AuthGuard>{children}</AuthGuard>
+      </body>
     </html>
   );
 }
