@@ -18,17 +18,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     console.log('Auth status from localStorage:', authStatus)
     console.log('Environment variable in useEffect:', process.env.NEXT_PUBLIC_APP_PASSWORD)
     
-    if (authStatus === 'true') {
-      console.log('User is authenticated, setting isAuthenticated to true')
-      setIsAuthenticated(true)
-    } else {
-      console.log('User is not authenticated, showing login form')
-    }
+    // Temporarily force show login page for testing
+    console.log('Forcing login page for testing')
+    setIsAuthenticated(false)
     setIsLoading(false)
   }, [])
 
   const handleLogin = (password: string) => {
-    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'test123'
+    const correctPassword = 'test123' // Temporarily hardcoded for testing
     
     // Debug logging
     console.log('Entered password:', password)
