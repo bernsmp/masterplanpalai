@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { HeroPill } from '@/components/ui/hero-pill'
+import { PhotoGallery } from '@/components/ui/gallery'
 import { ArrowRight, Calendar, Users, MessageSquare, MapPin, Zap } from 'lucide-react'
 
 export default function Home() {
@@ -47,35 +48,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto">
-
-          <HeroPill 
-            text="⚡️ Exclusive for Smart Solutions Subscribers"
-            className="mb-6 [&>p]:!bg-[#ffb829] [&>p]:!text-black [&>p]:!dark:bg-[#ffb829] [&>p]:!dark:text-black"
-          />
-          
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6">
-            Welcome to{' '}
-            <span className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] bg-clip-text text-transparent">
-              PlanPal AI
-            </span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto">
-            An AI planning assistant that acts like your group's most organized friend—the one who actually remembers everyone's schedules, knows all the good spots, and somehow makes plans happen without the endless group chat chaos.
-          </p>
-
-          <div className="flex justify-center mb-12">
-            <Button asChild size="lg" className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
-              <Link href="/create">
-                Create New Plan
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
+      {/* Photo Gallery Section */}
+      <section className="container mx-auto px-4 py-8">
+        <PhotoGallery animationDelay={0.5} />
       </section>
 
       {/* Features Section */}
