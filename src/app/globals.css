@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Custom form validation styles */
+input:invalid {
+  box-shadow: none;
+}
+
+input:invalid:focus {
+  box-shadow: 0 0 0 2px rgb(239 68 68 / 0.5);
+}
+
+/* Hide browser default validation tooltips */
+input:invalid:not(:focus):not(:placeholder-shown) {
+  border-color: rgb(239 68 68);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
