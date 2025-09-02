@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Toast } from "@/components/ui/toast"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { BorderTrail } from "@/components/ui/border-trail"
+import { ParticleButton } from "@/components/ui/particle-button"
 import { Calendar, Clock, Users, Plus, X, MapPin, Sparkles } from "lucide-react"
 import LocationSearch from "@/components/location-search"
 import VenueRecommendations from "@/components/venue-recommendations"
@@ -401,7 +403,8 @@ export default function CreatePlanPage() {
           <div className={formData.location ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>
             {/* Main Form */}
             <div className={formData.location ? "lg:col-span-2" : ""}>
-              <Card className="shadow-lg">
+              <Card className="shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:bg-white/95 dark:hover:bg-slate-800/95 group">
+                <BorderTrail className="bg-[#ffb829] group-hover:bg-[#e6a025] transition-colors duration-300" size={50} delay={0} />
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-[#ffb829]" />
@@ -680,7 +683,7 @@ export default function CreatePlanPage() {
 
                   {/* Submit Button */}
                   <div className="pt-4">
-                    <Button
+                    <ParticleButton
                       type="submit"
                       className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
                       size="lg"
@@ -688,7 +691,7 @@ export default function CreatePlanPage() {
                     >
                       <MapPin className="w-4 h-4 mr-2" />
                       {isSendingInvites ? "Sending Invites..." : "Create Plan"}
-                    </Button>
+                    </ParticleButton>
                   </div>
                 </form>
               </CardContent>
