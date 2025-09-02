@@ -22,7 +22,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [])
 
   const handleLogin = (password: string) => {
-    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'planpal2024'
+    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
     
     if (password === correctPassword) {
       localStorage.setItem('planpal_authenticated', 'true')
