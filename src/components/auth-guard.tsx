@@ -22,19 +22,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [])
 
   const handleLogin = (password: string) => {
-    const correctPassword = 'SmarterAI2025' // Temporarily hardcoded to test
+    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
     
-    // Debug logging
-    console.log('Entered password:', password)
-    console.log('Expected password:', correctPassword)
-    console.log('Environment variable:', process.env.NEXT_PUBLIC_APP_PASSWORD)
-    console.log('Password match:', password === correctPassword)
-    console.log('Entered length:', password.length)
-    console.log('Expected length:', correctPassword.length)
-    console.log('Entered char codes:', password.split('').map(c => c.charCodeAt(0)))
-    console.log('Expected char codes:', correctPassword.split('').map(c => c.charCodeAt(0)))
-    
-    // Try trimming whitespace and case-insensitive comparison
+    // Trim whitespace to handle any hidden characters
     const trimmedPassword = password.trim()
     const trimmedCorrect = correctPassword.trim()
     
@@ -42,7 +32,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       localStorage.setItem('planpal_authenticated', 'true')
       setIsAuthenticated(true)
     } else {
-      alert(`Incorrect password. Please try again. (Debug: Expected "${correctPassword}", Got "${password}")`)
+      alert('Incorrect password. Please try again.')
     }
   }
 
