@@ -1,11 +1,11 @@
 {
+  "/api/send-email/route": "/api/send-email",
   "/api/send-sms/route": "/api/send-sms",
   "/_not-found/page": "/_not-found",
-  "/api/send-email/route": "/api/send-email",
-  "/dashboard/page": "/dashboard",
-  "/page": "/",
   "/join/[share_code]/page": "/join/[share_code]",
+  "/page": "/",
   "/login/page": "/login",
+  "/dashboard/page": "/dashboard",
   "/create/page": "/create",
   "/plans/[id]/page": "/plans/[id]",
   "/my-plans/page": "/my-plans"
