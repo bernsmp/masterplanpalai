@@ -62,6 +62,7 @@ function ParticleButton({
 }: ParticleButtonProps) {
     const [showParticles, setShowParticles] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const divRef = useRef<HTMLDivElement>(null);
 
     // Check if asChild is being used
     const isAsChild = 'asChild' in props && props.asChild;
@@ -77,8 +78,9 @@ function ParticleButton({
             setTimeout(() => {
                 setShowParticles(false);
                 // Navigate after animation completes
-                if ((children as React.ReactElement).props.href) {
-                    window.location.href = (children as React.ReactElement).props.href;
+                const childElement = children as React.ReactElement;
+                if (childElement.props && typeof childElement.props === 'object' && 'href' in childElement.props) {
+                    window.location.href = (childElement.props as any).href;
                 }
             }, 1500); // Longer duration to see the animation
         } else {
@@ -100,20 +102,21 @@ function ParticleButton({
             onClick: (e: React.MouseEvent) => {
                 handleClick(e as any);
                 // Call the original onClick if it exists
-                if ((children as React.ReactElement).props.onClick) {
-                    (children as React.ReactElement).props.onClick(e);
+                const childElement = children as React.ReactElement;
+                if (childElement.props && typeof childElement.props === 'object' && 'onClick' in childElement.props) {
+                    (childElement.props as any).onClick(e);
                 }
             }
-        });
+        } as any);
 
         // Remove asChild from props to avoid conflicts
         const { asChild, ...buttonProps } = props;
 
         return (
             <>
-                {showParticles && <SuccessParticles buttonRef={buttonRef} />}
+                {showParticles && <SuccessParticles buttonRef={divRef as unknown as React.RefObject<HTMLButtonElement>} />}
                 <div
-                    ref={buttonRef}
+                    ref={divRef}
                     className={cn(
                         "relative inline-block",
                         showParticles && "scale-95",
@@ -131,7 +134,7 @@ function ParticleButton({
 
     return (
         <>
-            {showParticles && <SuccessParticles buttonRef={buttonRef} />}
+            {showParticles && <SuccessParticles buttonRef={buttonRef as unknown as React.RefObject<HTMLButtonElement>} />}
             <Button
                 ref={buttonRef}
                 onClick={handleClick}

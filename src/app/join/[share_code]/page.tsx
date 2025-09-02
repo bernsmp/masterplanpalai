@@ -624,7 +624,7 @@ export default function JoinPage() {
                 ) : (
                   /* Fallback to Suggested Venues */
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getSuggestedVenues(plan.activityType || plan.activity_type).map((venue) => (
+                    {getSuggestedVenues(plan.activityType || plan.activity_type || 'dining').map((venue) => (
                     <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
                       <CardContent className="p-4">
                         <div className="space-y-3">
@@ -722,7 +722,7 @@ export default function JoinPage() {
                 <div>
                   <p className="font-medium">Created</p>
                   <p className="text-slate-600 dark:text-slate-400">
-                    {new Date(plan.createdAt).toLocaleDateString('en-US', {
+                    {new Date(plan.createdAt || Date.now()).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'

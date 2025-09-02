@@ -581,6 +581,7 @@ export default function CreatePlanPage() {
                 {formData.location && (
                   <div className="pt-2">
                     <LocationSearch
+                      onLocationSelect={() => {}}
                       onVenueSelect={handleVenueSelect}
                       placeholder="Or search for a specific venue..."
                       label="Custom Venue Search"
