@@ -32,7 +32,7 @@ export default function CreatePlanPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [showTimeModal, setShowTimeModal] = useState(false)
-  const [isSendingSMS, setIsSendingSMS] = useState(false)
+  const [isSendingInvites, setIsSendingInvites] = useState(false)
   const [weather, setWeather] = useState<any>(null)
 
   const activityTypes = [
@@ -187,19 +187,65 @@ export default function CreatePlanPage() {
     }))
   }
 
+  const sendEmailInvites = async (planId: string) => {
+    const emailAddresses = formData.participants
+      .filter(p => p.email && p.email.trim())
+      .map(p => p.email!.trim())
+    
+    if (emailAddresses.length === 0) {
+      return { success: 0, failed: 0 }
+    }
+
+    let successCount = 0
+    let failedCount = 0
+
+    for (const email of emailAddresses) {
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: email,
+            eventName: formData.eventName,
+            date: formData.date,
+            time: formData.time,
+            location: formData.location?.name,
+            venue: formData.venue ? {
+              name: formData.venue.name,
+              address: formData.venue.formatted_address,
+              rating: formData.venue.rating,
+              priceLevel: formData.venue.price_level
+            } : undefined,
+            shareCode: planId,
+            organizerName: "Your friend" // Could be dynamic in the future
+          })
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          successCount++
+        } else {
+          failedCount++
+        }
+      } catch (error) {
+        console.error('Email error for', email, ':', error)
+        failedCount++
+      }
+    }
+
+    return { success: successCount, failed: failedCount }
+  }
+
   const sendSMSInvites = async (planId: string) => {
     const phoneNumbers = formData.participants
       .filter(p => p.phone && p.phone.trim())
       .map(p => p.phone!.trim())
     
     if (phoneNumbers.length === 0) {
-      setToastMessage("No phone numbers to send SMS to")
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
-      return
+      return { success: 0, failed: 0 }
     }
-
-    setIsSendingSMS(true)
     
     try {
       const inviteLink = `${window.location.origin}/join/${planId}`
@@ -219,19 +265,48 @@ export default function CreatePlanPage() {
       const result = await response.json()
 
       if (result.success) {
-        setToastMessage(`SMS sent to ${result.summary.successful} recipients!`)
-        setShowToast(true)
-        setTimeout(() => setShowToast(false), 4000)
+        return { success: result.summary.successful, failed: result.summary.failed }
       } else {
         throw new Error(result.error || 'Failed to send SMS')
       }
     } catch (error: any) {
       console.error('SMS error:', error)
-      setToastMessage(`SMS failed: ${error.message}`)
+      return { success: 0, failed: phoneNumbers.length }
+    }
+  }
+
+  const sendAllInvites = async (planId: string) => {
+    setIsSendingInvites(true)
+    
+    try {
+      const [emailResults, smsResults] = await Promise.all([
+        sendEmailInvites(planId),
+        sendSMSInvites(planId)
+      ])
+
+      const totalSuccess = emailResults.success + smsResults.success
+      const totalFailed = emailResults.failed + smsResults.failed
+
+      let message = ""
+      if (totalSuccess > 0) {
+        message = `Invites sent! ${totalSuccess} successful`
+        if (totalFailed > 0) {
+          message += `, ${totalFailed} failed`
+        }
+      } else {
+        message = "No invites sent - check participant contact info"
+      }
+
+      setToastMessage(message)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 4000)
+    } catch (error: any) {
+      console.error('Invite error:', error)
+      setToastMessage(`Invites failed: ${error.message}`)
       setShowToast(true)
       setTimeout(() => setShowToast(false), 4000)
     } finally {
-      setIsSendingSMS(false)
+      setIsSendingInvites(false)
     }
   }
 
@@ -257,6 +332,11 @@ export default function CreatePlanPage() {
     // Show success toast
     setToastMessage("Plan created successfully!")
     setShowToast(true)
+    
+    // Send invites (email and/or SMS) if there are participants
+    if (formData.participants.length > 0) {
+      sendAllInvites(planId)
+    }
     
     // Redirect to plan details page after a short delay
     setTimeout(() => {
@@ -469,10 +549,10 @@ export default function CreatePlanPage() {
                 <Label className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Participants
-                  <Badge variant="outline" className="text-xs">SMS Available</Badge>
+                  <Badge variant="outline" className="text-xs">Email & SMS</Badge>
                 </Label>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Add participants with email addresses. Include phone numbers to send SMS invites.
+                  Add participants with email addresses. Include phone numbers to send both email and SMS invites.
                 </p>
                 
                 {/* Add New Participant */}
@@ -560,9 +640,10 @@ export default function CreatePlanPage() {
                       type="submit"
                       className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
                       size="lg"
+                      disabled={isSendingInvites}
                     >
                       <MapPin className="w-4 h-4 mr-2" />
-                      Create Plan
+                      {isSendingInvites ? "Sending Invites..." : "Create Plan"}
                     </Button>
                   </div>
                 </form>
@@ -620,6 +701,9 @@ export default function CreatePlanPage() {
                   )}
                   {formData.participants.length > 0 && (
                     <p><strong>Participants:</strong> {formData.participants.length} people</p>
+                  )}
+                  {formData.participants.filter(p => p.email).length > 0 && (
+                    <p><strong>Email Invites:</strong> {formData.participants.filter(p => p.email).length} email addresses</p>
                   )}
                   {formData.participants.filter(p => p.phone).length > 0 && (
                     <p><strong>SMS Invites:</strong> {formData.participants.filter(p => p.phone).length} phone numbers</p>
