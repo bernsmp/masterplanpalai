@@ -1,4 +1,6 @@
 {
+  "/plans/[id]/page": "app/plans/[id]/page.js",
   "/page": "app/page.js",
-  "/join/[share_code]/page": "app/join/[share_code]/page.js"
+  "/join/[share_code]/page": "app/join/[share_code]/page.js",
+  "/create/page": "app/create/page.js"
 }
