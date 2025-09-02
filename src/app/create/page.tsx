@@ -20,12 +20,10 @@ export default function CreatePlanPage() {
     date: "",
     time: "",
     activityType: "",
-    participants: [] as string[],
-    phoneNumbers: [] as string[]
+    participants: [] as Array<{ email: string; phone?: string }>
   })
 
-  const [newParticipant, setNewParticipant] = useState("")
-  const [newPhoneNumber, setNewPhoneNumber] = useState("")
+  const [newParticipant, setNewParticipant] = useState({ email: "", phone: "" })
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [showTimeModal, setShowTimeModal] = useState(false)
@@ -100,11 +98,26 @@ export default function CreatePlanPage() {
   const timeSuggestions = getTimeSuggestions()
 
   const handleTimeSuggestionSelect = (suggestion: typeof timeSuggestions[0]) => {
+    // Convert 12-hour time to 24-hour format for HTML time input
+    const convertTo24Hour = (time12: string) => {
+      const [time, period] = time12.split(' ')
+      const [hours, minutes] = time.split(':')
+      let hour24 = parseInt(hours)
+      
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0
+      }
+      
+      return `${hour24.toString().padStart(2, '0')}:${minutes}`
+    }
+    
     // Convert suggestion to form data
     setFormData(prev => ({
       ...prev,
       date: suggestion.calculatedDate.toISOString().split('T')[0],
-      time: suggestion.time
+      time: convertTo24Hour(suggestion.time)
     }))
     
     setShowTimeModal(false)
@@ -116,41 +129,45 @@ export default function CreatePlanPage() {
   }
 
   const handleAddParticipant = () => {
-    if (newParticipant.trim() && !formData.participants.includes(newParticipant.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        participants: [...prev.participants, newParticipant.trim()]
-      }))
-      setNewParticipant("")
+    if (newParticipant.email.trim()) {
+      // Check if email already exists
+      const emailExists = formData.participants.some(p => p.email === newParticipant.email.trim())
+      
+      if (!emailExists) {
+        setFormData(prev => ({
+          ...prev,
+          participants: [...prev.participants, {
+            email: newParticipant.email.trim(),
+            phone: newParticipant.phone.trim() || undefined
+          }]
+        }))
+        setNewParticipant({ email: "", phone: "" })
+      }
     }
   }
 
   const handleRemoveParticipant = (email: string) => {
     setFormData(prev => ({
       ...prev,
-      participants: prev.participants.filter(p => p !== email)
+      participants: prev.participants.filter(p => p.email !== email)
     }))
   }
 
-  const handleAddPhoneNumber = () => {
-    if (newPhoneNumber.trim() && !formData.phoneNumbers.includes(newPhoneNumber.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        phoneNumbers: [...prev.phoneNumbers, newPhoneNumber.trim()]
-      }))
-      setNewPhoneNumber("")
-    }
-  }
-
-  const handleRemovePhoneNumber = (phoneNumber: string) => {
+  const handleUpdateParticipant = (email: string, field: 'email' | 'phone', value: string) => {
     setFormData(prev => ({
       ...prev,
-      phoneNumbers: prev.phoneNumbers.filter(p => p !== phoneNumber)
+      participants: prev.participants.map(p => 
+        p.email === email ? { ...p, [field]: value } : p
+      )
     }))
   }
 
   const sendSMSInvites = async (planId: string) => {
-    if (formData.phoneNumbers.length === 0) {
+    const phoneNumbers = formData.participants
+      .filter(p => p.phone && p.phone.trim())
+      .map(p => p.phone!.trim())
+    
+    if (phoneNumbers.length === 0) {
       setToastMessage("No phone numbers to send SMS to")
       setShowToast(true)
       setTimeout(() => setShowToast(false), 3000)
@@ -169,7 +186,7 @@ export default function CreatePlanPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          phoneNumbers: formData.phoneNumbers,
+          phoneNumbers,
           message
         })
       })
@@ -393,107 +410,85 @@ export default function CreatePlanPage() {
                 <Label className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Participants
+                  <Badge variant="outline" className="text-xs">SMS Available</Badge>
                 </Label>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Add participants with email addresses. Include phone numbers to send SMS invites.
+                </p>
                 
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter email address"
-                    value={newParticipant}
-                    onChange={(e) => setNewParticipant(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParticipant())}
-                  />
+                {/* Add New Participant */}
+                <div className="space-y-3 p-4 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="newEmail" className="text-sm">Email *</Label>
+                      <Input
+                        id="newEmail"
+                        placeholder="john@email.com"
+                        value={newParticipant.email}
+                        onChange={(e) => setNewParticipant(prev => ({ ...prev, email: e.target.value }))}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParticipant())}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="newPhone" className="text-sm">Phone (optional)</Label>
+                      <Input
+                        id="newPhone"
+                        placeholder="555-123-4567"
+                        value={newParticipant.phone}
+                        onChange={(e) => setNewParticipant(prev => ({ ...prev, phone: e.target.value }))}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParticipant())}
+                      />
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     onClick={handleAddParticipant}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-2"
+                    disabled={!newParticipant.email.trim()}
                   >
                     <Plus className="w-4 h-4" />
-                    Add Person
+                    Add Participant
                   </Button>
                 </div>
 
                 {/* Participant List */}
                 {formData.participants.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Separator />
-                    <div className="flex flex-wrap gap-2">
-                      {formData.participants.map((email, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="flex items-center gap-1 px-3 py-1"
-                        >
-                          {email}
+                    <div className="space-y-3">
+                      {formData.participants.map((participant, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Email</Label>
+                              <Input
+                                value={participant.email}
+                                onChange={(e) => handleUpdateParticipant(participant.email, 'email', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-500">Phone</Label>
+                              <Input
+                                placeholder="Optional"
+                                value={participant.phone || ''}
+                                onChange={(e) => handleUpdateParticipant(participant.email, 'phone', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                          </div>
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-auto p-0 ml-1 hover:bg-transparent"
-                            onClick={() => handleRemoveParticipant(email)}
+                            className="h-auto p-2 hover:bg-red-100 dark:hover:bg-red-900/20"
+                            onClick={() => handleRemoveParticipant(participant.email)}
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-4 h-4 text-red-500" />
                           </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Phone Numbers Section */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Send SMS Invites
-                  <Badge variant="outline" className="text-xs">Premium Feature</Badge>
-                </Label>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Add phone numbers to send professional SMS invites with the join link
-                </p>
-                
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter phone number (e.g., 555-123-4567)"
-                    value={newPhoneNumber}
-                    onChange={(e) => setNewPhoneNumber(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPhoneNumber())}
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleAddPhoneNumber}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Number
-                  </Button>
-                </div>
-
-                {/* Phone Number List */}
-                {formData.phoneNumbers.length > 0 && (
-                  <div className="space-y-2">
-                    <Separator />
-                    <div className="flex flex-wrap gap-2">
-                      {formData.phoneNumbers.map((phoneNumber, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
-                        >
-                          📱 {phoneNumber}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-0 ml-1 hover:bg-transparent"
-                            onClick={() => handleRemovePhoneNumber(phoneNumber)}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </Badge>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -532,8 +527,8 @@ export default function CreatePlanPage() {
                 {formData.participants.length > 0 && (
                   <p><strong>Participants:</strong> {formData.participants.length} people</p>
                 )}
-                {formData.phoneNumbers.length > 0 && (
-                  <p><strong>SMS Invites:</strong> {formData.phoneNumbers.length} phone numbers</p>
+                {formData.participants.filter(p => p.phone).length > 0 && (
+                  <p><strong>SMS Invites:</strong> {formData.participants.filter(p => p.phone).length} phone numbers</p>
                 )}
               </div>
             </CardContent>
@@ -553,3 +548,4 @@ export default function CreatePlanPage() {
     </div>
   )
 }
+

@@ -17,9 +17,7 @@ export default function Home() {
             </div>
             <span className="text-xl font-bold text-slate-900 dark:text-white">PlanPal AI</span>
           </div>
-          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-            Framework Ready
-          </Badge>
+
         </div>
       </header>
 
@@ -43,21 +41,11 @@ export default function Home() {
             An AI planning assistant that acts like your group's most organized friend—the one who actually remembers everyone's schedules, knows all the good spots, and somehow makes plans happen without the endless group chat chaos.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex justify-center mb-12">
             <Button asChild size="lg" className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
               <Link href="/create">
                 Create New Plan
                 <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/dashboard">
-                View Component Showcase
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/login">
-                View Login Examples
               </Link>
             </Button>
           </div>
@@ -147,68 +135,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Development Workflow Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-8">
-            Development Workflow
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">1</span>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Project Discussion</h3>
-              <p className="text-slate-600 dark:text-slate-300">Define features and requirements</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">2</span>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Feature Building</h3>
-              <p className="text-slate-600 dark:text-slate-300">Implement with shadcn/ui ecosystem</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#ffb829]/10 dark:bg-[#ffb829]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-[#ffb829] dark:text-[#ffb829]">3</span>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Deployment</h3>
-              <p className="text-slate-600 dark:text-slate-300">Test locally, then deploy to Vercel</p>
-            </div>
-          </div>
 
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
-            <p className="text-slate-600 dark:text-slate-300 mb-4">
-              <strong>Next Steps:</strong> Go back to Cursor to discuss your project idea after exploring the component showcase.
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/dashboard">
-                Explore Components Now
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-slate-600 dark:text-slate-300">
-            Built with 5 Day Sprint Framework by Omar Choudhry - Ready for Max's vision
-          </p>
-          <div className="flex justify-center space-x-6 mt-4">
-            <Link href="/dashboard" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-              Components
-            </Link>
-            <Link href="/login" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-              Login Examples
-            </Link>
-          </div>
-        </div>
-      </footer>
+
     </div>
   )
 }
