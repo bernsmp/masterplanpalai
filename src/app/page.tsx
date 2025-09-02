@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,14 +11,39 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 relative flex items-center justify-center">
+          {/* Left side navigation */}
+          <div className="absolute left-4">
+            <Button asChild variant="outline">
+              <Link href="/my-plans">
+                <Calendar className="w-4 h-4 mr-2" />
+                My Plans
+              </Link>
+            </Button>
+          </div>
+          
+          {/* Centered logo */}
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#ffb829] to-[#e6a025] rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="PlanPal AI Logo"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="text-xl font-bold text-slate-900 dark:text-white">PlanPal AI</span>
           </div>
-
+          
+          {/* Right side navigation */}
+          <div className="absolute right-4">
+            <Button asChild className="bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]">
+              <Link href="/create">
+                Create Plan
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 

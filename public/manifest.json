@@ -1,0 +1,27 @@
+{
+  "name": "PlanPal AI - Smart Planning Assistant",
+  "short_name": "PlanPal AI",
+  "description": "An AI planning assistant that acts like your group's most organized friend",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffb829",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "social", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr"
+}

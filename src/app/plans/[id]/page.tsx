@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Share2, Edit, Check } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Share2, Edit, Check, Plus } from "lucide-react"
 import VenueDetailsComponent from "@/components/venue-details"
 
 interface Plan {
@@ -56,6 +56,7 @@ export default function PlanDetailsPage() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
   const [rsvpCounts, setRsvpCounts] = useState({
     going: 0,
@@ -67,18 +68,52 @@ export default function PlanDetailsPage() {
   const [smsResults, setSmsResults] = useState<any>(null)
 
   useEffect(() => {
-    // Mock data for development since supabase was deleted
-    const mockPlan: Plan = {
-      id: planId,
-      name: "Sample Event",
-      date: "2024-01-15",
-      time: "19:00",
-      activity_type: "dinner",
-      created_at: new Date().toISOString()
+    const fetchPlan = () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch plans from localStorage
+        const plansData = localStorage.getItem('plans')
+        if (!plansData) {
+          setError('Plan not found')
+          return
+        }
+
+        const plans = JSON.parse(plansData)
+        const planData = plans.find((p: any) => p.id === planId)
+
+        if (!planData) {
+          setError('Plan not found')
+          return
+        }
+
+        setPlan(planData)
+
+        // Fetch RSVPs from localStorage
+        const rsvpsData = localStorage.getItem('rsvps')
+        const rsvpsList = rsvpsData ? JSON.parse(rsvpsData).filter((r: RSVP) => r.plan_id === planId) : []
+        setRsvps(rsvpsList)
+
+        // Calculate counts
+        const counts = {
+          going: rsvpsList.filter((r: RSVP) => r.status === 'going').length,
+          not_going: rsvpsList.filter((r: RSVP) => r.status === 'not_going').length,
+          maybe: rsvpsList.filter((r: RSVP) => r.status === 'maybe').length
+        }
+        setRsvpCounts(counts)
+
+      } catch (error) {
+        console.error('Error fetching plan:', error)
+        setError('Failed to load plan details')
+      } finally {
+        setLoading(false)
+      }
     }
-    
-    setPlan(mockPlan)
-    setLoading(false)
+
+    if (planId) {
+      fetchPlan()
+    }
   }, [planId])
 
   const handleRSVP = async (status: 'going' | 'not_going' | 'maybe') => {
@@ -356,6 +391,39 @@ export default function PlanDetailsPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ffb829] mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-300">Loading plan details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-6xl mb-4">😞</div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            Plan Not Found
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            {error}
+          </p>
+          <div className="space-y-3">
+            <Button
+              onClick={() => router.push('/my-plans')}
+              className="w-full bg-gradient-to-r from-[#ffb829] to-[#e6a025] hover:from-[#e6a025] hover:to-[#cc8f1f]"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to My Plans
+            </Button>
+            <Button
+              onClick={() => router.push('/create')}
+              variant="outline"
+              className="w-full"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New Plan
+            </Button>
+          </div>
         </div>
       </div>
     )

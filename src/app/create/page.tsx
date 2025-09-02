@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -345,10 +346,47 @@ export default function CreatePlanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+      {/* Header */}
+      <div className="w-full max-w-6xl mb-8">
         <div className="text-center mb-8">
+          <div className="relative flex items-center justify-center mb-6">
+            {/* Left side navigation */}
+            <div className="absolute left-0">
+              <Button
+                onClick={() => router.push('/my-plans')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                My Plans
+              </Button>
+            </div>
+            
+            {/* Centered logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <Image
+                  src="/logo.png"
+                  alt="PlanPal AI Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">PlanPal AI</span>
+            </div>
+            
+            {/* Right side navigation */}
+            <div className="absolute right-0">
+              <Button
+                onClick={() => router.push('/')}
+                variant="outline"
+              >
+                Home
+              </Button>
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
             Create a New Plan
           </h1>
@@ -356,22 +394,25 @@ export default function CreatePlanPage() {
             Plan the perfect get-together with your friends
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#ffb829]" />
-                  Create a New Plan
-                </CardTitle>
-                <CardDescription>
-                  Fill out the details below to create your perfect plan
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent>
+      {/* Form Container */}
+      <div className="w-full max-w-4xl mx-auto px-5">
+          <div className={formData.location ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>
+            {/* Main Form */}
+            <div className={formData.location ? "lg:col-span-2" : ""}>
+              <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-[#ffb829]" />
+                      Create a New Plan
+                    </CardTitle>
+                    <CardDescription>
+                      Fill out the details below to create your perfect plan
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
               {/* Event Name */}
               <div className="space-y-2">
@@ -382,6 +423,7 @@ export default function CreatePlanPage() {
                   value={formData.eventName}
                   onChange={(e) => setFormData(prev => ({ ...prev, eventName: e.target.value }))}
                   required
+                  className="invalid:border-red-500 invalid:ring-red-500"
                 />
               </div>
 
@@ -461,6 +503,7 @@ export default function CreatePlanPage() {
                       value={formData.date}
                       onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                       required
+                      className="invalid:border-red-500 invalid:ring-red-500"
                     />
                   </div>
                   
@@ -472,6 +515,7 @@ export default function CreatePlanPage() {
                       value={formData.time}
                       onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
                       required
+                      className="invalid:border-red-500 invalid:ring-red-500"
                     />
                   </div>
                 </div>
@@ -652,7 +696,7 @@ export default function CreatePlanPage() {
           </div>
 
           {/* Venue Recommendations Sidebar */}
-          <div className="lg:col-span-1">
+          <div className={formData.location ? "lg:col-span-1" : ""}>
             {formData.location && (
               <div className="sticky top-6 space-y-4">
                 {/* Weather Service */}
