@@ -60,8 +60,25 @@ export default function LocationSearch({
   // Load Google Maps API
   useEffect(() => {
     const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
+      // Check if already loaded
+      if (window.google && window.google.maps && window.google.maps.places) {
+        setApiLoaded(true)
         return Promise.resolve()
+      }
+      
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
+      if (existingScript) {
+        // Wait for it to load
+        return new Promise((resolve) => {
+          const checkLoaded = setInterval(() => {
+            if (window.google && window.google.maps && window.google.maps.places) {
+              clearInterval(checkLoaded)
+              setApiLoaded(true)
+              resolve(true)
+            }
+          }, 100)
+        })
       }
       
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
@@ -78,6 +95,7 @@ export default function LocationSearch({
         script.defer = true
         script.onload = () => {
           console.log('Google Maps API loaded successfully')
+          setApiLoaded(true)
           resolve(true)
         }
         script.onerror = (error) => {
@@ -89,7 +107,6 @@ export default function LocationSearch({
     }
 
     loadGoogleMaps()
-      .then(() => setApiLoaded(true))
       .catch((error) => {
         console.error('Google Maps API loading error:', error)
         setApiLoaded(false)

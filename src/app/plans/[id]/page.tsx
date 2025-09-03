@@ -435,8 +435,8 @@ export default function PlanDetailsPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-600 dark:text-slate-300">Plan not found</p>
-          <Button onClick={() => router.push('/dashboard')} className="mt-4">
-            Back to Dashboard
+          <Button onClick={() => router.push('/my-plans')} className="mt-4">
+            View My Plans
           </Button>
         </div>
       </div>
@@ -447,20 +447,39 @@ export default function PlanDetailsPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/dashboard')}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </Button>
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/my-plans')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            My Plans
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => router.push('/create')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Plan
+          </Button>
+        </div>
 
         {/* Plan Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {plan.eventName || plan.name}
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              {plan.eventName || plan.name}
+            </h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/plans/${planId}/edit`)}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </Button>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
             <Badge variant="secondary" className="text-lg px-4 py-2">
               {plan.activityType || plan.activity_type}
@@ -502,8 +521,8 @@ export default function PlanDetailsPage() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-[#ffb829]" />
                   <div>
-                    <p className="font-medium">Location TBD</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Venue</p>
+                    <p className="font-medium">{typeof plan.location === 'string' ? plan.location : plan.location?.name || "Location TBD"}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{plan.address || "Venue to be determined"}</p>
                   </div>
                 </div>
               </CardContent>

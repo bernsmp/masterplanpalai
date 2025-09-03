@@ -75,6 +75,7 @@ export default function VenueRecommendations({
   const [venues, setVenues] = useState<VenueDetails[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [displayCount, setDisplayCount] = useState(8)
 
   // Activity-specific search terms and filters
   const getActivityConfig = (activity: string, weather?: WeatherData | null) => {
@@ -153,7 +154,7 @@ export default function VenueRecommendations({
           radius: config.radius
         },
         fields: ['id', 'displayName', 'formattedAddress', 'rating', 'priceLevel', 'types', 'location'],
-        maxResultCount: 6
+        maxResultCount: 10
       }
 
       const { places } = await Place.searchByText(request)
@@ -282,12 +283,14 @@ export default function VenueRecommendations({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex items-center gap-2">
-        <MapPin className="w-5 h-5 text-[#ffb829]" />
-        <h3 className="text-lg font-semibold">Suggested Venues</h3>
-        <Badge variant="outline" className="text-xs">
-          Near {location.name}
-        </Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-[#ffb829]" />
+          <h3 className="text-lg font-semibold">Suggested Venues</h3>
+          <Badge variant="outline" className="text-xs">
+            Near {location.name}
+          </Badge>
+        </div>
         {weather && (
           <Badge 
             variant={weather.isIndoorWeather ? "destructive" : "default"}
@@ -303,10 +306,14 @@ export default function VenueRecommendations({
           </Badge>
         )}
       </div>
+      <p className="text-sm text-muted-foreground text-center">
+        Click any venue to use it as your location
+      </p>
       
       {venues.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {venues.map((venue) => (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {venues.slice(0, displayCount).map((venue) => (
             <Card 
               key={venue.place_id} 
               className={cn(
@@ -374,13 +381,25 @@ export default function VenueRecommendations({
                       onVenueSelect(venue)
                     }}
                   >
-                    {selectedVenue?.place_id === venue.place_id ? "Selected" : "Select Venue"}
+                    {selectedVenue?.place_id === venue.place_id ? "✓ Selected" : "Use This Venue"}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+          {displayCount < venues.length && (
+            <div className="mt-6 text-center">
+              <Button
+                onClick={() => setDisplayCount(prev => Math.min(prev + 4, venues.length))}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                Load More ({venues.length - displayCount} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <Card className="border-dashed border-2 border-slate-200 dark:border-slate-700">
           <CardContent className="p-6 text-center">
