@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyPassword } from '@/lib/auth-middleware';
 
 interface EmailRequest {
   to: string;
@@ -19,8 +20,16 @@ interface EmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    if (!verifyPassword(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
-    
+
     if (!apiKey) {
       return NextResponse.json(
         { error: 'Resend API key not configured' },

@@ -208,6 +208,7 @@ export default function CreatePlanPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_APP_PASSWORD}`,
           },
           body: JSON.stringify({
             to: email,
@@ -258,6 +259,7 @@ export default function CreatePlanPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_APP_PASSWORD}`,
         },
         body: JSON.stringify({
           phoneNumbers,

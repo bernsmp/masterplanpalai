@@ -22,7 +22,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [])
 
   const handleLogin = (password: string) => {
-    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD || 'SmarterAI2025'
+    const correctPassword = process.env.NEXT_PUBLIC_APP_PASSWORD
+    
+    if (!correctPassword) {
+      alert('Authentication system not configured. Please contact support.')
+      return
+    }
     
     // Trim whitespace to handle any hidden characters
     const trimmedPassword = password.trim()

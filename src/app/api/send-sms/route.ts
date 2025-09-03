@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
+import { verifyPassword } from '@/lib/auth-middleware'
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    if (!verifyPassword(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const accountSid = process.env.TWILIO_ACCOUNT_SID
     const authToken = process.env.TWILIO_AUTH_TOKEN
     const fromNumber = process.env.TWILIO_PHONE_NUMBER
