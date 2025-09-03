@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "env": {
+    "NEXT_PUBLIC_GOOGLE_PLACES_API_KEY": "@google_places_api_key",
+    "NEXT_PUBLIC_WEATHER_API_KEY": "@weather_api_key", 
+    "NEXT_PUBLIC_APP_PASSWORD": "@app_password",
+    "TWILIO_ACCOUNT_SID": "@twilio_account_sid",
+    "TWILIO_AUTH_TOKEN": "@twilio_auth_token",
+    "TWILIO_PHONE_NUMBER": "@twilio_phone_number",
+    "RESEND_API_KEY": "@resend_api_key"
+  }
+}
