@@ -274,7 +274,7 @@ export function CreateEventWizard() {
                   )}
                   style={{
                     backgroundColor: index <= currentStep ? brandColor : undefined,
-                    ringColor: index === currentStep ? `${brandColor}33` : undefined,
+                    boxShadow: index === currentStep ? `0 0 0 4px ${brandColor}33` : undefined,
                   }}
                   onClick={() => {
                     if (index < currentStep) {
@@ -410,7 +410,7 @@ export function CreateEventWizard() {
                         <>
                           <LocationSearch 
                             onLocationSelect={handleLocationSelect}
-                            eventType={formData.eventVibe}
+                            activityType={formData.eventVibe}
                           />
                           
                           {/* Show venue recommendations after location is selected */}

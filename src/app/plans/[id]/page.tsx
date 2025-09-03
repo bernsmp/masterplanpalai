@@ -522,7 +522,7 @@ export default function PlanDetailsPage() {
                   <MapPin className="w-5 h-5 text-[#ffb829]" />
                   <div>
                     <p className="font-medium">{typeof plan.location === 'string' ? plan.location : plan.location?.name || "Location TBD"}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{plan.address || "Venue to be determined"}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{typeof plan.location === 'object' && plan.location ? plan.location.name : "Venue to be determined"}</p>
                   </div>
                 </div>
               </CardContent>
