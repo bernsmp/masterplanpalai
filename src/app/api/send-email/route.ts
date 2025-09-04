@@ -30,6 +30,8 @@ export async function POST(request: NextRequest) {
     const body: EmailRequest = await request.json();
     const { to, subject, html } = body;
 
+    console.log('Email request received:', { to, subject: subject?.substring(0, 50) + '...', htmlLength: html?.length });
+
     if (!to || !subject || !html) {
       return NextResponse.json(
         { error: 'Missing required fields: to, subject, html' },
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'PlanPal AI <invites@planpal.ai>',
+      from: 'PlanPal AI <onboarding@resend.dev>',
       to: [to],
       subject: subject,
       html: html,
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Resend error:', error);
       return NextResponse.json(
-        { error: 'Failed to send email' },
+        { error: `Failed to send email: ${error.message || 'Unknown error'}` },
         { status: 500 }
       );
     }
