@@ -133,6 +133,48 @@ export default function JoinPage() {
   const [dateVoting, setDateVoting] = useState<{[key: string]: boolean}>({})
   const [isSubmittingVote, setIsSubmittingVote] = useState(false)
   
+  // Function to refresh plan data after voting
+  const refreshPlanData = async () => {
+    if (!shareCode) return
+    
+    try {
+      const { data: updatedPlan, error } = await supabase
+        .from('plans')
+        .select(`
+          *,
+          rsvps (
+            id,
+            name,
+            email,
+            response,
+            notes,
+            created_at
+          ),
+          date_options (
+            id,
+            option_date,
+            option_time,
+            availability (
+              id,
+              name,
+              email,
+              is_available,
+              created_at
+            )
+          )
+        `)
+        .eq('share_code', shareCode)
+        .single()
+      
+      if (error) throw error
+      
+      setDbPlan(updatedPlan)
+      console.log('✅ Plan data refreshed after voting')
+    } catch (error) {
+      console.error('Error refreshing plan data:', error)
+    }
+  }
+  
   // RSVP summary toggle state
   const [showRSVPDetails, setShowRSVPDetails] = useState<{[key: string]: boolean}>({
     going: false,
@@ -923,6 +965,7 @@ export default function JoinPage() {
                   dateOptions={dbPlan.date_options}
                   existingVotes={dbPlan.availability || []}
                   currentUserEmail={userEmail}
+                  onVoteSubmitted={refreshPlanData}
                 />
                           </div>
                 )}

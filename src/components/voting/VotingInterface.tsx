@@ -24,6 +24,7 @@ interface VotingInterfaceProps {
   dateOptions?: any[]
   existingVotes?: any[]
   currentUserEmail?: string
+  onVoteSubmitted?: () => void // Callback to refresh parent data
 }
 
 export interface Vote {
@@ -51,7 +52,8 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   shareCode,
   dateOptions = [],
   existingVotes = [],
-  currentUserEmail
+  currentUserEmail,
+  onVoteSubmitted
 }) => {
   const [activeTab, setActiveTab] = useState<
     'dates' | 'venues' | 'activities' | 'results'
@@ -109,6 +111,11 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
         if (error) {
           console.error('Error saving vote:', error)
           return
+        }
+        
+        // Call the callback to refresh parent data
+        if (onVoteSubmitted) {
+          onVoteSubmitted()
         }
       } catch (error) {
         console.error('Error saving vote:', error)
