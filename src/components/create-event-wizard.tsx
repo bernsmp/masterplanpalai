@@ -85,6 +85,7 @@ export function CreateEventWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   
@@ -246,6 +247,12 @@ export function CreateEventWizard() {
   };
 
   const handleSubmit = async () => {
+    // Prevent double submission
+    if (isSubmitting || isSubmitted) {
+      console.log('Already submitting or submitted, ignoring duplicate request');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -323,6 +330,7 @@ export function CreateEventWizard() {
       
       setToastMessage("Plan created successfully!");
       setShowToast(true);
+      setIsSubmitted(true);
       
       // Redirect to join page
       setTimeout(() => {
@@ -923,12 +931,16 @@ export function CreateEventWizard() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   type="submit"
-                  disabled={!isStepValid() || isSubmitting}
+                  disabled={!isStepValid() || isSubmitting || isSubmitted}
                   className="flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" /> Creating...
+                    </>
+                  ) : isSubmitted ? (
+                    <>
+                      <Check className="h-4 w-4" /> Event Created!
                     </>
                   ) : (
                     <>

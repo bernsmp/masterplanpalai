@@ -38,6 +38,24 @@ export const planHelpers = {
       throw new Error('Supabase not configured')
     }
     
+    // Check for duplicate events (same creator, name, date, time)
+    if (planData.creator_email) {
+      const { data: existingPlans, error: checkError } = await supabase
+        .from('plans')
+        .select('id')
+        .eq('creator_email', planData.creator_email)
+        .eq('name', planData.name)
+        .eq('date', planData.date)
+        .eq('time', planData.time)
+        .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Within last 5 minutes
+      
+      if (checkError) {
+        console.warn('Error checking for duplicates:', checkError)
+      } else if (existingPlans && existingPlans.length > 0) {
+        throw new Error('A similar event was created recently. Please wait a moment before creating another.')
+      }
+    }
+    
     const { data, error } = await supabase
       .from('plans')
       .insert(planData)
