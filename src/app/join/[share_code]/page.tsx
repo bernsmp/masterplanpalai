@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Mail, User } from "lucide-react"
@@ -75,6 +76,7 @@ export default function JoinPage() {
               name,
               email,
               response,
+              notes,
               created_at
             )
           `)
@@ -109,6 +111,7 @@ export default function JoinPage() {
   // Form state for new RSVP
   const [userName, setUserName] = useState("")
   const [userEmail, setUserEmail] = useState("")
+  const [rsvpNotes, setRsvpNotes] = useState("")
   const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -196,7 +199,8 @@ export default function JoinPage() {
           await planHelpers.submitRSVP(dbPlan.id, {
             name: name,
             email: email,
-            response: response
+            response: response,
+            notes: rsvpNotes || undefined
           })
           
           alert(`Thanks ${name}! You're ${response} to ${dbPlan.name}!`)
@@ -211,6 +215,7 @@ export default function JoinPage() {
                 name,
                 email,
                 response,
+                notes,
                 created_at
               )
             `)
@@ -540,6 +545,11 @@ export default function JoinPage() {
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                               {rsvp.email}
                             </p>
+                            {rsvp.notes && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400 italic mt-1">
+                                "{rsvp.notes}"
+                              </p>
+                            )}
                           </div>
                         </div>
                         <Badge 
@@ -608,6 +618,18 @@ export default function JoinPage() {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Notes Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (optional)</Label>
+                  <Textarea
+                    id="notes"
+                    value={rsvpNotes}
+                    onChange={(e) => setRsvpNotes(e.target.value)}
+                    placeholder="e.g., I'm bringing chips and dip!"
+                    className="min-h-[80px]"
+                  />
                 </div>
 
                 {/* RSVP Buttons */}

@@ -70,6 +70,7 @@ export const planHelpers = {
     name: string
     email?: string
     response: 'going' | 'not-going' | 'maybe'
+    notes?: string
   }) {
     if (!this.isConfigured()) {
       throw new Error('Supabase not configured')
@@ -79,7 +80,10 @@ export const planHelpers = {
       .from('rsvps')
       .upsert({
         plan_id: planId,
-        ...rsvpData
+        name: rsvpData.name,
+        email: rsvpData.email,
+        response: rsvpData.response,
+        notes: rsvpData.notes
       }, {
         onConflict: 'plan_id,email'
       })

@@ -40,6 +40,12 @@ interface EventFormData {
   eventTime: string;
   eventVibe: string;
   
+  // Date Options (for polling)
+  dateOptions: Array<{
+    date: string;
+    time: string;
+  }>;
+  
   // Location
   location: google.maps.places.PlaceResult | null;
   locationName: string;
@@ -83,6 +89,7 @@ export function CreateEventWizard() {
     eventDate: "",
     eventTime: "",
     eventVibe: "",
+    dateOptions: [{ date: "", time: "" }],
     location: null,
     locationName: "",
     locationAddress: "",
@@ -95,6 +102,30 @@ export function CreateEventWizard() {
 
   const updateFormData = (field: keyof EventFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Date options helpers
+  const addDateOption = () => {
+    setFormData(prev => ({
+      ...prev,
+      dateOptions: [...prev.dateOptions, { date: "", time: "" }]
+    }));
+  };
+
+  const removeDateOption = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      dateOptions: prev.dateOptions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateDateOption = (index: number, field: 'date' | 'time', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dateOptions: prev.dateOptions.map((option, i) => 
+        i === index ? { ...option, [field]: value } : option
+      )
+    }));
   };
 
   const nextStep = () => {
@@ -116,7 +147,8 @@ export function CreateEventWizard() {
       case 0: // Basics
         return formData.eventName.trim() !== "" && 
                formData.eventDate !== "" && 
-               formData.eventTime !== "";
+               formData.eventTime !== "" &&
+               formData.dateOptions.some(option => option.date !== "" && option.time !== "");
       case 1: // Location
         return formData.locationName.trim() !== "" && formData.locationAddress.trim() !== "";
       case 2: // Details
@@ -181,6 +213,30 @@ export function CreateEventWizard() {
     }));
   };
 
+  // Save date options to database
+  const saveDateOptions = async (planId: string, dateOptions: Array<{date: string, time: string}>) => {
+    if (!planHelpers.isConfigured()) {
+      throw new Error('Supabase not configured');
+    }
+    
+    const { supabase } = await import('@/lib/supabase');
+    
+    // Insert each date option
+    for (const option of dateOptions) {
+      if (option.date && option.time) {
+        const { error } = await supabase
+          .from('date_options')
+          .insert({
+            plan_id: planId,
+            option_date: option.date,
+            option_time: option.time
+          });
+        
+        if (error) throw error;
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
@@ -201,8 +257,18 @@ export function CreateEventWizard() {
           description: formData.eventDescription,
         };
         
-        await planHelpers.createPlan(planData);
+        const createdPlan = await planHelpers.createPlan(planData);
         console.log('✅ Event saved to database');
+        
+        // Save date options if any are provided
+        if (formData.dateOptions.some(option => option.date && option.time)) {
+          try {
+            await saveDateOptions(createdPlan.id, formData.dateOptions);
+            console.log('✅ Date options saved to database');
+          } catch (dateError) {
+            console.log('⚠️ Date options save failed:', dateError);
+          }
+        }
         
       } catch (dbError) {
         console.log('⚠️ Database save failed, using localStorage fallback');
@@ -410,6 +476,65 @@ export function CreateEventWizard() {
                       <p className="text-sm text-muted-foreground">
                         This helps us suggest the perfect venues for your event
                       </p>
+                    </motion.div>
+
+                    {/* Date Options for Polling */}
+                    <motion.div variants={fadeInUp} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Propose Multiple Dates (Let attendees vote!)</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add multiple date/time options and let your guests vote on their availability
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {formData.dateOptions.map((option, index) => (
+                          <div key={index} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <Label htmlFor={`date-${index}`} className="text-xs">Date</Label>
+                              <Input
+                                id={`date-${index}`}
+                                type="date"
+                                min={today}
+                                value={option.date}
+                                onChange={(e) => updateDateOption(index, 'date', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Label htmlFor={`time-${index}`} className="text-xs">Time</Label>
+                              <Input
+                                id={`time-${index}`}
+                                type="time"
+                                value={option.time}
+                                onChange={(e) => updateDateOption(index, 'time', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                            {formData.dateOptions.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeDateOption(index)}
+                                className="px-2"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={addDateOption}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Another Date Option
+                        </Button>
+                      </div>
                     </motion.div>
                   </CardContent>
                 </>
