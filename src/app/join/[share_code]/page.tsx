@@ -24,6 +24,8 @@ interface Plan {
     lng: number
     name: string
   }
+  location_name?: string
+  location_address?: string
   venue?: any
   participants?: Array<{ email: string; phone?: string }>
   createdAt?: string
@@ -440,8 +442,8 @@ export default function JoinPage() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-[#ffb829]" />
                   <div>
-                    <p className="font-medium">Location TBD</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Venue</p>
+                    <p className="font-medium">{plan.location_name || plan.location?.name || "Location TBD"}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{plan.location_address || "Venue"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -551,7 +553,7 @@ export default function JoinPage() {
                   <Button
                     variant={currentUserRSVP === 'going' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('going')}
-                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
+                    disabled={isSubmitting}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <CheckCircle className="w-6 h-6" />
@@ -561,7 +563,7 @@ export default function JoinPage() {
                   <Button
                     variant={currentUserRSVP === 'maybe' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('maybe')}
-                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
+                    disabled={isSubmitting}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <span className="text-lg">🤔</span>
@@ -571,7 +573,7 @@ export default function JoinPage() {
                   <Button
                     variant={currentUserRSVP === 'not_going' ? 'default' : 'outline'}
                     onClick={() => handleRSVP('not-going')}
-                    disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
+                    disabled={isSubmitting}
                     className="flex flex-col items-center gap-2 py-6"
                   >
                     <XCircle className="w-6 h-6" />
