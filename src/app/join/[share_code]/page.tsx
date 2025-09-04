@@ -65,11 +65,29 @@ export default function JoinPage() {
   useEffect(() => {
     async function loadFromDatabase() {
       try {
-        const data = await planHelpers.getPlanByShareCode(shareCode)
-        setDbPlan(data)
-        console.log('✅ Loaded from database:', data)
+        // Get the plan WITH its RSVPs using direct Supabase query
+        const { data: planData, error: planError } = await supabase
+          .from('plans')
+          .select(`
+            *,
+            rsvps (
+              id,
+              name,
+              email,
+              response,
+              created_at
+            )
+          `)
+          .eq('share_code', shareCode)
+          .single()
+        
+        if (planError) throw planError
+        
+        setDbPlan(planData)
+        console.log('✅ Loaded plan with RSVPs:', planData)
+        
       } catch (error) {
-        console.log('⚠️ Database not connected, using mock data')
+        console.log('⚠️ Database not connected, using mock data:', error)
       } finally {
         setLoadingDb(false)
       }
@@ -77,7 +95,7 @@ export default function JoinPage() {
     
     loadFromDatabase()
   }, [shareCode])
-
+  
   const [plan, setPlan] = useState<Plan | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,18 +127,18 @@ export default function JoinPage() {
           console.log('✅ Using database data for plan')
         } else {
           // Fall back to localStorage
-          const plansData = localStorage.getItem('plans')
-          if (!plansData) {
-            setError('Event not found')
-            return
-          }
+        const plansData = localStorage.getItem('plans')
+        if (!plansData) {
+          setError('Event not found')
+          return
+        }
 
-          const plans = JSON.parse(plansData)
+        const plans = JSON.parse(plansData)
           planData = plans.find((p: any) => p.id === shareCode)
 
-          if (!planData) {
-            setError('Event not found')
-            return
+        if (!planData) {
+          setError('Event not found')
+          return
           }
           console.log('⚠️ Using localStorage fallback data')
         }
@@ -166,9 +184,9 @@ export default function JoinPage() {
       // Use form values instead of prompts
       if (!userName.trim()) {
         alert('Please enter your name first')
-        return
-      }
-      
+      return
+    }
+
       const name = userName.trim()
       const email = userEmail.trim() || undefined
       
@@ -182,7 +200,27 @@ export default function JoinPage() {
           })
           
           alert(`Thanks ${name}! You're ${response} to ${dbPlan.name}!`)
-          window.location.reload()
+          
+          // Reload the plan data to show updated RSVP counts
+          const { data: updatedPlan, error: reloadError } = await supabase
+            .from('plans')
+            .select(`
+              *,
+              rsvps (
+                id,
+                name,
+                email,
+                response,
+                created_at
+              )
+            `)
+            .eq('share_code', shareCode)
+            .single()
+          
+          if (!reloadError && updatedPlan) {
+            setDbPlan(updatedPlan)
+            console.log('✅ Reloaded plan with updated RSVPs:', updatedPlan)
+          }
           return
         } catch (dbError) {
           console.log('Database RSVP failed, using localStorage fallback:', dbError)
@@ -478,40 +516,40 @@ export default function JoinPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Participants ({rsvps.length})
+                  Participants ({dbPlan?.rsvps?.length || 0})
                 </CardTitle>
                 <CardDescription>
                   People who have responded to this event
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {rsvps.length > 0 ? (
+                {(dbPlan?.rsvps?.length || 0) > 0 ? (
                   <div className="space-y-3">
-                    {rsvps.map((rsvp) => (
+                    {dbPlan?.rsvps?.map((rsvp: any) => (
                       <div key={rsvp.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                              {rsvp.user_name.charAt(0).toUpperCase()}
+                              {rsvp.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div>
                             <p className="font-medium text-slate-900 dark:text-white">
-                              {rsvp.user_name}
+                              {rsvp.name}
                             </p>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                              {rsvp.user_email}
+                              {rsvp.email}
                             </p>
                           </div>
                         </div>
                         <Badge 
                           variant={
-                            rsvp.status === 'going' ? 'default' : 
-                            rsvp.status === 'maybe' ? 'secondary' : 'destructive'
+                            rsvp.response === 'going' ? 'default' : 
+                            rsvp.response === 'maybe' ? 'secondary' : 'destructive'
                           }
                         >
-                          {rsvp.status === 'going' ? 'Going' : 
-                           rsvp.status === 'maybe' ? 'Maybe' : 'Not Going'}
+                          {rsvp.response === 'going' ? 'Going' : 
+                           rsvp.response === 'maybe' ? 'Maybe' : 'Not Going'}
                         </Badge>
                       </div>
                     ))}
@@ -582,7 +620,7 @@ export default function JoinPage() {
                   >
                     <CheckCircle className="w-6 h-6" />
                     <span>I'm Going</span>
-                    <Badge variant="secondary">{rsvpCounts.going}</Badge>
+                    <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length || 0}</Badge>
                   </Button>
                   <Button
                     variant={currentUserRSVP === 'maybe' ? 'default' : 'outline'}
@@ -592,7 +630,7 @@ export default function JoinPage() {
                   >
                     <span className="text-lg">🤔</span>
                     <span>Maybe</span>
-                    <Badge variant="secondary">{rsvpCounts.maybe}</Badge>
+                    <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length || 0}</Badge>
                   </Button>
                   <Button
                     variant={currentUserRSVP === 'not_going' ? 'default' : 'outline'}
@@ -602,7 +640,7 @@ export default function JoinPage() {
                   >
                     <XCircle className="w-6 h-6" />
                     <span>Can't Make It</span>
-                    <Badge variant="secondary">{rsvpCounts.not_going}</Badge>
+                    <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
                   </Button>
                 </div>
 
@@ -743,17 +781,17 @@ export default function JoinPage() {
                   </CardTitle>
                   <CardDescription>
                     The venue chosen for this event
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                   <VenueDetailsComponent 
                     venue={plan.venue} 
                     showFullDetails={true}
                     className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
                   />
-                </CardContent>
-              </Card>
-            )}
+                      </CardContent>
+                    </Card>
+                )}
           </div>
 
           {/* Sidebar */}
@@ -769,27 +807,27 @@ export default function JoinPage() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     Going
                   </span>
-                  <Badge variant="secondary">{rsvpCounts.going}</Badge>
+                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length || 0}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <span className="text-lg">🤔</span>
                     Maybe
                   </span>
-                  <Badge variant="secondary">{rsvpCounts.maybe}</Badge>
+                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length || 0}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="flex justify-between items-center">
                     <XCircle className="w-4 h-4 text-red-600" />
                     Not Going
                   </span>
-                  <Badge variant="secondary">{rsvpCounts.not_going}</Badge>
+                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
                 </div>
                 <div className="pt-3 border-t">
                   <div className="flex justify-between items-center font-medium">
                     <span>Total Responses</span>
                     <Badge variant="outline">
-                      {rsvpCounts.going + rsvpCounts.maybe + rsvpCounts.not_going}
+                      {dbPlan?.rsvps?.length || 0}
                     </Badge>
                   </div>
                 </div>
