@@ -34,6 +34,10 @@ const steps = [
 const brandColor = "#ffb829";
 
 interface EventFormData {
+  // Creator Info
+  creatorName: string;
+  creatorEmail: string;
+  
   // Basic Info
   eventName: string;
   eventDate: string;
@@ -85,6 +89,8 @@ export function CreateEventWizard() {
   const [toastMessage, setToastMessage] = useState("");
   
   const [formData, setFormData] = useState<EventFormData>({
+    creatorName: "",
+    creatorEmail: "",
     eventName: "",
     eventDate: "",
     eventTime: "",
@@ -145,7 +151,9 @@ export function CreateEventWizard() {
   const isStepValid = () => {
     switch (currentStep) {
       case 0: // Basics
-        return formData.eventName.trim() !== "" && 
+        return formData.creatorName.trim() !== "" && 
+               formData.creatorEmail.trim() !== "" && 
+               formData.eventName.trim() !== "" && 
                formData.eventDate !== "" && 
                formData.eventTime !== "" &&
                formData.dateOptions.some(option => option.date !== "" && option.time !== "");
@@ -255,6 +263,8 @@ export function CreateEventWizard() {
           location_name: formData.locationName,
           location_address: formData.locationAddress,
           description: formData.eventDescription,
+          creator_email: formData.creatorEmail,
+          creator_name: formData.creatorName,
         };
         
         const createdPlan = await planHelpers.createPlan(planData);
@@ -431,6 +441,40 @@ export function CreateEventWizard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Creator Info Section */}
+                    <motion.div variants={fadeInUp} className="space-y-4 border-b pb-4 mb-4">
+                      <h3 className="font-semibold text-lg">Your Info (so you can manage this event)</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="creatorName">Your Name</Label>
+                          <Input 
+                            id="creatorName"
+                            value={formData.creatorName}
+                            onChange={(e) => updateFormData("creatorName", e.target.value)}
+                            placeholder="John Doe"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="creatorEmail">Your Email</Label>
+                          <Input 
+                            id="creatorEmail"
+                            type="email"
+                            value={formData.creatorEmail}
+                            onChange={(e) => updateFormData("creatorEmail", e.target.value)}
+                            placeholder="john@example.com"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-500">
+                        We'll use this to let you manage your events (no password needed)
+                      </p>
+                    </motion.div>
+
                     <motion.div variants={fadeInUp} className="space-y-2">
                       <Label htmlFor="eventName">What are you planning?</Label>
                       <Input

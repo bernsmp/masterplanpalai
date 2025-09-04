@@ -31,6 +31,8 @@ export const planHelpers = {
     location_name?: string
     location_address?: string
     description?: string
+    creator_email?: string
+    creator_name?: string
   }) {
     if (!this.isConfigured()) {
       throw new Error('Supabase not configured')
