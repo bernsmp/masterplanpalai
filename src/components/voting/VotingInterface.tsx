@@ -188,22 +188,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50 p-4" data-id={dataId}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            Exclusive for Smart Solutions Subscribers
-          </div>
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">
-            Group Event Planning
-          </h1>
-          <p className="text-slate-600">
-            Vote on dates, venues, and activities to find the perfect plan
-          </p>
-          <div className="flex justify-center mt-4">
-            <VoterAvatars users={users} />
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto pt-4">
 
         {/* Navigation Tabs */}
         <div className="flex justify-center mb-8">
