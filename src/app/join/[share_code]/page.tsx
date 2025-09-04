@@ -733,78 +733,27 @@ export default function JoinPage() {
               </CardContent>
             </Card>
 
-            {/* Venue Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#ffb829]" />
-                  {plan.venue ? 'Selected Venue' : 'Suggested Venues'}
-                </CardTitle>
-                <CardDescription>
-                  {plan.venue 
-                    ? 'The venue chosen for this event'
-                    : `Great places for your ${plan.activityType || plan.activity_type} event`
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {plan.venue ? (
-                  /* Selected Venue Display */
+            {/* Venue Information - Only show if venue is selected */}
+            {plan.venue && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-[#ffb829]" />
+                    Selected Venue
+                  </CardTitle>
+                  <CardDescription>
+                    The venue chosen for this event
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <VenueDetailsComponent 
                     venue={plan.venue} 
                     showFullDetails={true}
                     className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
                   />
-                ) : (
-                  /* Fallback to Suggested Venues */
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getSuggestedVenues(plan.activityType || plan.activity_type || 'dining').map((venue) => (
-                    <Card key={venue.id} className="hover:shadow-md transition-shadow border-2 hover:border-[#ffb829]/30 dark:hover:border-[#ffb829]/60">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          {/* Venue Header */}
-                          <div>
-                            <h4 className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-2">
-                              {venue.name}
-                            </h4>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {venue.type} • {venue.cuisine || venue.type}
-                            </p>
-                          </div>
-
-                          {/* Rating and Price */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                {venue.rating}
-                              </span>
-                            </div>
-                            <Badge variant="outline" className="text-xs px-2 py-1">
-                              {venue.price}
-                            </Badge>
-                          </div>
-
-                          {/* Distance */}
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-500" />
-                            <span className="text-xs text-slate-600 dark:text-slate-400">
-                              {venue.distance}
-                            </span>
-                          </div>
-
-                          {/* Description */}
-                          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                            {venue.description}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
