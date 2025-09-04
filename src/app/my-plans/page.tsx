@@ -66,27 +66,48 @@ export default function MyPlansPage() {
       if (createdError) throw createdError
 
       // Load events where user is an attendee (has an RSVP)
-      const { data: attendedEvents, error: attendedError } = await supabase
-        .from('plans')
-        .select(`
-          *,
-          rsvps (
-            id,
-            name,
-            email,
-            response
-          )
-        `)
-        .eq('rsvps.email', email.trim())
-        .order('created_at', { ascending: false })
+      // First, get all RSVPs for this user
+      const { data: userRsvps, error: rsvpError } = await supabase
+        .from('rsvps')
+        .select('plan_id')
+        .eq('email', email.trim())
       
-      if (attendedError) throw attendedError
+      if (rsvpError) throw rsvpError
+      
+      // Then get the plans for those RSVPs
+      let attendedEvents = []
+      if (userRsvps && userRsvps.length > 0) {
+        const planIds = userRsvps.map(rsvp => rsvp.plan_id)
+        const { data: attendedEventsData, error: attendedError } = await supabase
+          .from('plans')
+          .select(`
+            *,
+            rsvps (
+              id,
+              name,
+              email,
+              response
+            )
+          `)
+          .in('id', planIds)
+          .order('created_at', { ascending: false })
+        
+        if (attendedError) throw attendedError
+        attendedEvents = attendedEventsData || []
+      }
 
       // Combine both lists and remove duplicates (in case user is both creator and attendee)
       const allEvents = [...(createdEvents || []), ...(attendedEvents || [])]
       const uniqueEvents = allEvents.filter((event, index, self) => 
         index === self.findIndex(e => e.id === event.id)
       )
+      
+      // Debug logging
+      console.log('🔍 Debug - Email:', email.trim())
+      console.log('🔍 Debug - Created events:', createdEvents?.length || 0)
+      console.log('🔍 Debug - Attended events:', attendedEvents?.length || 0)
+      console.log('🔍 Debug - Total unique events:', uniqueEvents.length)
+      console.log('🔍 Debug - User RSVPs found:', userRsvps?.length || 0)
       
       setPlans(uniqueEvents)
       
