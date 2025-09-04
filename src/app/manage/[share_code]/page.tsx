@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { planHelpers } from "@/lib/supabase"
 import { useToastContext } from "@/components/ui/toast-provider"
 
@@ -70,6 +71,11 @@ export default function ManageEventPage() {
   const [newAttendeeName, setNewAttendeeName] = useState('')
   const [newAttendeeEmail, setNewAttendeeEmail] = useState('')
   const [isAddingAttendee, setIsAddingAttendee] = useState(false)
+  const [editingAttendee, setEditingAttendee] = useState<any>(null)
+  const [editAttendeeName, setEditAttendeeName] = useState('')
+  const [editAttendeeEmail, setEditAttendeeEmail] = useState('')
+  const [editAttendeeResponse, setEditAttendeeResponse] = useState<'going' | 'maybe' | 'not-going'>('going')
+  const [isSavingAttendee, setIsSavingAttendee] = useState(false)
   
   // Event management states
   const [isEditingEvent, setIsEditingEvent] = useState(false)
@@ -150,23 +156,15 @@ export default function ManageEventPage() {
 
     setIsSendingEmail(true)
     try {
-      // Filter and validate emails
-      const emails = plan.rsvps
-        .filter(rsvp => rsvp.email)
-        .map(rsvp => rsvp.email!)
-        .filter(email => {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-          return emailRegex.test(email)
-        })
-
-      // Check for invalid emails
+      // Get all emails first
       const allEmails = plan.rsvps
         .filter(rsvp => rsvp.email)
         .map(rsvp => rsvp.email!)
-      const invalidEmails = allEmails.filter(email => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        return !emailRegex.test(email)
-      })
+
+      // Check for invalid emails BEFORE trying to send
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const invalidEmails = allEmails.filter(email => !emailRegex.test(email))
+      const validEmails = allEmails.filter(email => emailRegex.test(email))
 
       if (invalidEmails.length > 0) {
         toast({
@@ -176,10 +174,19 @@ export default function ManageEventPage() {
         })
       }
 
+      if (validEmails.length === 0) {
+        toast({
+          title: "No Valid Emails",
+          description: "No valid email addresses found to send to",
+          variant: "destructive"
+        })
+        return
+      }
+
       let successCount = 0
       let errorCount = 0
 
-      for (const email of emails) {
+      for (const email of validEmails) {
         try {
           const response = await fetch('/api/send-email', {
             method: 'POST',
@@ -338,6 +345,96 @@ export default function ManageEventPage() {
       })
     } finally {
       setIsAddingAttendee(false)
+    }
+  }
+
+  const handleEditAttendee = (attendee: any) => {
+    setEditingAttendee(attendee)
+    setEditAttendeeName(attendee.name)
+    setEditAttendeeEmail(attendee.email || '')
+    setEditAttendeeResponse(attendee.response)
+  }
+
+  const handleSaveAttendee = async () => {
+    if (!plan || !editingAttendee || !editAttendeeName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter attendee name",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsSavingAttendee(true)
+    try {
+      // Update attendee in database
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await supabase
+        .from('rsvps')
+        .update({
+          name: editAttendeeName.trim(),
+          email: editAttendeeEmail.trim() || null,
+          response: editAttendeeResponse
+        })
+        .eq('id', editingAttendee.id)
+
+      if (error) throw error
+
+      // Reload plan data
+      const updatedPlan = await planHelpers.getPlanByShareCode(shareCode)
+      setPlan(updatedPlan)
+
+      toast({
+        title: "Attendee Updated",
+        description: `${editAttendeeName} has been updated`
+      })
+
+      setEditingAttendee(null)
+      setEditAttendeeName('')
+      setEditAttendeeEmail('')
+      setEditAttendeeResponse('going')
+    } catch (error) {
+      console.error('Error updating attendee:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update attendee. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSavingAttendee(false)
+    }
+  }
+
+  const handleDeleteAttendee = async (attendeeId: string, attendeeName: string) => {
+    if (!confirm(`Are you sure you want to remove ${attendeeName} from this event?`)) {
+      return
+    }
+
+    try {
+      // Delete attendee from database
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await supabase
+        .from('rsvps')
+        .delete()
+        .eq('id', attendeeId)
+
+      if (error) throw error
+
+      // Reload plan data
+      const updatedPlan = await planHelpers.getPlanByShareCode(shareCode)
+      setPlan(updatedPlan)
+
+      toast({
+        title: "Attendee Removed",
+        description: `${attendeeName} has been removed from the event`
+      })
+    } catch (error) {
+      console.error('Error deleting attendee:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove attendee. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -807,8 +904,20 @@ export default function ManageEventPage() {
                             {rsvp.response === 'going' ? 'Going' :
                              rsvp.response === 'maybe' ? 'Maybe' : 'Not Going'}
                           </Badge>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditAttendee(rsvp)}
+                          >
                             Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteAttendee(rsvp.id, rsvp.name)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
                           </Button>
                         </div>
                       </div>
@@ -969,6 +1078,66 @@ export default function ManageEventPage() {
               >
                 Delete Event
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Attendee Dialog */}
+        <Dialog open={!!editingAttendee} onOpenChange={() => setEditingAttendee(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Attendee</DialogTitle>
+              <DialogDescription>
+                Update attendee information
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-attendee-name">Name *</Label>
+                <Input
+                  id="edit-attendee-name"
+                  value={editAttendeeName}
+                  onChange={(e) => setEditAttendeeName(e.target.value)}
+                  placeholder="Enter attendee name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-attendee-email">Email</Label>
+                <Input
+                  id="edit-attendee-email"
+                  type="email"
+                  value={editAttendeeEmail}
+                  onChange={(e) => setEditAttendeeEmail(e.target.value)}
+                  placeholder="Enter attendee email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-attendee-response">RSVP Status</Label>
+                <Select value={editAttendeeResponse} onValueChange={(value: 'going' | 'maybe' | 'not-going') => setEditAttendeeResponse(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="going">Going</SelectItem>
+                    <SelectItem value="maybe">Maybe</SelectItem>
+                    <SelectItem value="not-going">Not Going</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline"
+                  onClick={() => setEditingAttendee(null)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveAttendee}
+                  disabled={isSavingAttendee || !editAttendeeName.trim()}
+                >
+                  {isSavingAttendee ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
