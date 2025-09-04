@@ -104,7 +104,15 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+        <div className="text-center">
+          <span className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
+            🚀 Coming Soon
+          </span>
+          <p className="text-slate-600 mt-2">Venue voting will be available soon!</p>
+        </div>
+      </div>
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
           Choose Your Venue

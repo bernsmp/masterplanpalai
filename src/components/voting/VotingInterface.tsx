@@ -9,6 +9,7 @@ import {
   Clock,
   DollarSign,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { DateVoting } from './DateVoting'
 import { VenueVoting } from './VenueVoting'
 import { ActivityVoting } from './ActivityVoting'
@@ -18,6 +19,11 @@ import { HeatMap } from './HeatMap'
 
 interface VotingInterfaceProps {
   'data-id'?: string
+  planId?: string
+  shareCode?: string
+  dateOptions?: any[]
+  existingVotes?: any[]
+  currentUserEmail?: string
 }
 
 export interface Vote {
@@ -41,6 +47,11 @@ export interface User {
 
 export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   'data-id': dataId,
+  planId,
+  shareCode,
+  dateOptions = [],
+  existingVotes = [],
+  currentUserEmail
 }) => {
   const [activeTab, setActiveTab] = useState<
     'dates' | 'venues' | 'activities' | 'results'
@@ -80,12 +91,37 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
   ])
   const [currentUserId] = useState('1')
 
-  const addVote = (
+  const addVote = async (
     category: 'dates' | 'venues' | 'activities',
     itemId: string,
     weight: number = 1,
     isRequired: boolean = false,
   ) => {
+    // For dates, save to database
+    if (category === 'dates' && planId && currentUserEmail) {
+      try {
+        const { error } = await supabase
+          .from('availability')
+          .upsert({
+            date_option_id: itemId,
+            email: currentUserEmail,
+            name: 'User', // We'll get this from the form
+            is_available: weight > 0
+          }, {
+            onConflict: 'date_option_id,email'
+          })
+        
+        if (error) {
+          console.error('Error saving vote:', error)
+          return
+        }
+      } catch (error) {
+        console.error('Error saving vote:', error)
+        return
+      }
+    }
+    
+    // For venues and activities, just update local state (coming soon)
     setVotes((prev) => {
       const existingVote = prev.find(
         (v) =>
@@ -133,21 +169,25 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
       id: 'dates',
       label: 'Dates',
       icon: Calendar,
+      badge: null // Dates work
     },
     {
       id: 'venues',
       label: 'Venues',
       icon: MapPin,
+      badge: 'Soon' // Coming soon
     },
     {
       id: 'activities',
       label: 'Activities',
       icon: Activity,
+      badge: 'Soon' // Coming soon
     },
     {
       id: 'results',
       label: 'Results',
       icon: TrendingUp,
+      badge: null // Results work for dates
     },
   ]
 
@@ -177,7 +217,7 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+                className={`relative flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-amber-400 text-white shadow-md'
                     : 'text-slate-600 hover:text-slate-800 hover:bg-gray-50'
@@ -185,6 +225,11 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
               >
                 <tab.icon size={20} />
                 {tab.label}
+                {tab.badge && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>

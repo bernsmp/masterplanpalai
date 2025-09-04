@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Mail, User } from "lucide-react"
 import VenueDetailsComponent from "@/components/venue-details"
 import { supabase, planHelpers } from "@/lib/supabase"
+import { VotingInterface } from "@/components/voting/VotingInterface"
 
 interface Plan {
   id: string
@@ -1000,6 +1001,30 @@ export default function JoinPage() {
                       </CardContent>
                     </Card>
             )}
+
+            {/* Enhanced Voting Interface - Show if multiple date options exist */}
+            {dbPlan?.date_options && dbPlan.date_options.length > 1 && (
+              <div className="mt-12">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 mb-6">
+                  <div className="text-center">
+                    <span className="inline-flex items-center bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium mb-2">
+                      ✨ NEW: Advanced Voting System
+                    </span>
+                    <h3 className="text-xl font-semibold text-slate-800">
+                      Vote on dates, venues, and activities
+                    </h3>
+                  </div>
+                </div>
+                
+                <VotingInterface
+                  planId={dbPlan.id}
+                  shareCode={params.share_code as string}
+                  dateOptions={dbPlan.date_options}
+                  existingVotes={dbPlan.availability || []}
+                  currentUserEmail={userEmail}
+                />
+                  </div>
+                )}
 
             {/* Venue Information - Only show if venue is selected */}
             {plan.venue && (

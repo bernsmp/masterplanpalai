@@ -149,38 +149,32 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <h4 className="text-slate-700 font-medium mb-2">Date</h4>
-            <p className="text-slate-800">
-              {topDate
-                ? itemNames[topDate.itemId as keyof typeof itemNames]
-                : 'No votes yet'}
-            </p>
-            {topDate && (
-              <p className="text-sm text-slate-500">{topDate.votes as number} votes</p>
+            {topDate ? (
+              <>
+                <p className="text-slate-800">
+                  {itemNames[topDate.itemId as keyof typeof itemNames]}
+                </p>
+                <p className="text-sm text-slate-500">{topDate.votes as number} votes</p>
+              </>
+            ) : (
+              <p className="text-slate-500">Vote on dates to see results</p>
             )}
           </div>
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <h4 className="text-slate-700 font-medium mb-2">Venue</h4>
-            <p className="text-slate-800">
-              {topVenue
-                ? itemNames[topVenue.itemId as keyof typeof itemNames]
-                : 'No votes yet'}
-            </p>
-            {topVenue && (
-              <p className="text-sm text-slate-500">{topVenue.votes as number} votes</p>
-            )}
+            <div className="text-center text-slate-400">
+              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                Venue voting coming soon
+              </span>
+            </div>
           </div>
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <h4 className="text-slate-700 font-medium mb-2">Activity</h4>
-            <p className="text-slate-800">
-              {topActivity
-                ? itemNames[topActivity.itemId as keyof typeof itemNames]
-                : 'No votes yet'}
-            </p>
-            {topActivity && (
-              <p className="text-sm text-slate-500">
-                {topActivity.votes as number} votes
-              </p>
-            )}
+            <div className="text-center text-slate-400">
+              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                Activity voting coming soon
+              </span>
+            </div>
           </div>
         </div>
       </div>
