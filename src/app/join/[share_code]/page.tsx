@@ -66,7 +66,7 @@ export default function JoinPage() {
   useEffect(() => {
     async function loadFromDatabase() {
       try {
-        // Get the plan WITH its RSVPs using direct Supabase query
+        // Get the plan WITH its RSVPs and date options using direct Supabase query
         const { data: planData, error: planError } = await supabase
           .from('plans')
           .select(`
@@ -78,6 +78,18 @@ export default function JoinPage() {
               response,
               notes,
               created_at
+            ),
+            date_options (
+              id,
+              option_date,
+              option_time,
+              availability (
+                id,
+                name,
+                email,
+                is_available,
+                created_at
+              )
             )
           `)
           .eq('share_code', shareCode)
@@ -114,6 +126,10 @@ export default function JoinPage() {
   const [rsvpNotes, setRsvpNotes] = useState("")
   const [currentUserRSVP, setCurrentUserRSVP] = useState<'going' | 'not_going' | 'maybe' | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Date voting state
+  const [dateVoting, setDateVoting] = useState<{[key: string]: boolean}>({})
+  const [isSubmittingVote, setIsSubmittingVote] = useState(false)
 
   useEffect(() => {
     const fetchPlanAndRSVPs = () => {
@@ -217,6 +233,18 @@ export default function JoinPage() {
                 response,
                 notes,
                 created_at
+              ),
+              date_options (
+                id,
+                option_date,
+                option_time,
+                availability (
+                  id,
+                  name,
+                  email,
+                  is_available,
+                  created_at
+                )
               )
             `)
             .eq('share_code', shareCode)
@@ -253,6 +281,75 @@ export default function JoinPage() {
     } catch (error) {
       console.error('RSVP error:', error)
       alert('Sorry, there was an error with your RSVP')
+    }
+  }
+
+  // Handle date voting
+  const handleDateVote = async (dateOptionId: string, isAvailable: boolean) => {
+    if (!userName.trim()) {
+      alert('Please enter your name first')
+      return
+    }
+    
+    setIsSubmittingVote(true)
+    try {
+      const { error } = await supabase
+        .from('availability')
+        .upsert({
+          date_option_id: dateOptionId,
+          name: userName.trim(),
+          email: userEmail.trim() || undefined,
+          is_available: isAvailable
+        }, {
+          onConflict: 'date_option_id,email'
+        })
+      
+      if (error) throw error
+      
+      // Update local state
+      setDateVoting(prev => ({
+        ...prev,
+        [dateOptionId]: isAvailable
+      }))
+      
+      // Reload data to show updated votes
+      const { data: updatedPlan, error: reloadError } = await supabase
+        .from('plans')
+        .select(`
+          *,
+          rsvps (
+            id,
+            name,
+            email,
+            response,
+            notes,
+            created_at
+          ),
+          date_options (
+            id,
+            option_date,
+            option_time,
+            availability (
+              id,
+              name,
+              email,
+              is_available,
+              created_at
+            )
+          )
+        `)
+        .eq('share_code', shareCode)
+        .single()
+      
+      if (!reloadError && updatedPlan) {
+        setDbPlan(updatedPlan)
+      }
+      
+    } catch (error) {
+      console.error('Date vote error:', error)
+      alert('Sorry, there was an error with your vote')
+    } finally {
+      setIsSubmittingVote(false)
     }
   }
 
@@ -792,6 +889,107 @@ export default function JoinPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Date Voting - Only show if there are multiple date options */}
+            {dbPlan?.date_options && dbPlan.date_options.length > 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-[#ffb829]" />
+                    Vote on Dates
+                  </CardTitle>
+                  <CardDescription>
+                    Help choose the best date by voting on your availability
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {dbPlan.date_options.map((option: any) => {
+                    const availableCount = option.availability?.filter((a: any) => a.is_available).length || 0
+                    const totalVotes = option.availability?.length || 0
+                    const userVote = option.availability?.find((a: any) => a.email === userEmail || a.name === userName)
+                    
+                    return (
+                      <div key={option.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold">
+                              {new Date(option.option_date).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              {new Date(`2000-01-01T${option.option_time}`).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">
+                              {availableCount} of {totalVotes} available
+                            </p>
+                            <div className="w-20 bg-slate-200 dark:bg-slate-700 rounded-full h-2 mt-1">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: totalVotes > 0 ? `${(availableCount / totalVotes) * 100}%` : '0%' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={userVote?.is_available === true ? "default" : "outline"}
+                            onClick={() => handleDateVote(option.id, true)}
+                            disabled={isSubmittingVote || !userName.trim()}
+                            className="flex-1"
+                          >
+                            ✅ Available
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={userVote?.is_available === false ? "destructive" : "outline"}
+                            onClick={() => handleDateVote(option.id, false)}
+                            disabled={isSubmittingVote || !userName.trim()}
+                            className="flex-1"
+                          >
+                            ❌ Not Available
+                          </Button>
+                        </div>
+                        
+                        {option.availability && option.availability.length > 0 && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Votes:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {option.availability.map((vote: any) => (
+                                <Badge 
+                                  key={vote.id} 
+                                  variant={vote.is_available ? "default" : "secondary"}
+                                  className="text-xs"
+                                >
+                                  {vote.name} {vote.is_available ? '✅' : '❌'}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  
+                  {!userName.trim() && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+                      Please enter your name above to vote on dates
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Venue Information - Only show if venue is selected */}
             {plan.venue && (
