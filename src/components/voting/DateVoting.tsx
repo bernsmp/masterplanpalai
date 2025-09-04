@@ -57,9 +57,9 @@ export const DateVoting: React.FC<DateVotingProps> = ({
       date: option.option_date,
       dayName: new Date(option.option_date).toLocaleDateString('en-US', { weekday: 'long' }),
       weather: {
-        icon: 'sun' as const, // Default to sun for now
-        temp: 72, // Default temperature
-        description: 'Good weather',
+        icon: 'sun' as const,
+        temp: 0, // Hide temperature until we have real weather data
+        description: '',
       },
       availability: availabilityPercentage,
       conflicts: [],
@@ -73,8 +73,8 @@ export const DateVoting: React.FC<DateVotingProps> = ({
       dayName: 'Friday',
       weather: {
         icon: 'sun' as const,
-        temp: 72,
-        description: 'Sunny',
+        temp: 0, // Hide temperature until we have real weather data
+        description: '',
       },
       availability: 0, // Hide percentage until real data
       conflicts: [],
@@ -109,7 +109,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
         <p className="text-slate-600">Select the best dates for your event</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {dates.map((date) => {
           const votes = getVotesForItem('dates', date.id)
           const voteWeight = getVoteWeight('dates', date.id)
@@ -122,7 +122,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
               progress={progress}
               isSelected={votes.some((v) => v.userId === '1')}
             >
-              <div className="relative">
+              <div className="relative min-h-[200px]">
                 {date.isOptimal && (
                   <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full p-1">
                     <Award size={16} className="text-white" />
@@ -130,39 +130,43 @@ export const DateVoting: React.FC<DateVotingProps> = ({
                 )}
 
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-800">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-slate-800 truncate">
                       {date.dayName}
                     </h3>
-                    <p className="text-slate-500 text-sm">
+                    <p className="text-slate-500 text-sm truncate">
                       {new Date(date.date).toLocaleDateString()}
                     </p>
                   </div>
-                  <ProgressRing progress={date.availability} size={40} />
+                  <div className="ml-2 flex-shrink-0">
+                    <ProgressRing progress={date.availability} size={40} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 mb-3">
-                  {getWeatherIcon(date.weather.icon)}
-                  <span className="text-slate-800 font-medium">
-                    {date.weather.temp}°F
-                  </span>
-                  <span className="text-slate-500 text-sm">
-                    {date.weather.description}
-                  </span>
-                </div>
+                {date.weather.temp > 0 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    {getWeatherIcon(date.weather.icon)}
+                    <span className="text-slate-800 font-medium">
+                      {date.weather.temp}°F
+                    </span>
+                    <span className="text-slate-500 text-sm">
+                      {date.weather.description}
+                    </span>
+                  </div>
+                )}
 
                 <div className="text-sm text-slate-600 mb-3">
                   {date.availability}% available
                 </div>
 
                 {date.conflicts.length > 0 && (
-                  <div className="flex items-center gap-1 text-orange-600 text-sm">
+                  <div className="flex items-center gap-1 text-orange-600 text-sm mb-3">
                     <AlertTriangle size={14} />
-                    <span>{date.conflicts[0]}</span>
+                    <span className="truncate">{date.conflicts[0]}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-center mt-auto pt-4">
                   <div className="flex -space-x-2">
                     {votes.slice(0, 3).map((vote, index) => (
                       <div
