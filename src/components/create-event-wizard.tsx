@@ -365,21 +365,22 @@ export function CreateEventWizard() {
       // Generate share code
       const shareCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
+      // Define planData at the top level for email sending
+      const planData = {
+        name: formData.eventName,
+        date: formData.eventDate,
+        time: formData.eventTime,
+        activity_type: formData.eventVibe,
+        share_code: shareCode,
+        location_name: formData.locationName,
+        location_address: formData.locationAddress,
+        description: formData.eventDescription,
+        creator_email: formData.creatorEmail,
+        creator_name: formData.creatorName,
+      };
+      
       // Try to save to database first
       try {
-        const planData = {
-          name: formData.eventName,
-          date: formData.eventDate,
-          time: formData.eventTime,
-          activity_type: formData.eventVibe,
-          share_code: shareCode,
-          location_name: formData.locationName,
-          location_address: formData.locationAddress,
-          description: formData.eventDescription,
-          creator_email: formData.creatorEmail,
-          creator_name: formData.creatorName,
-        };
-        
         const createdPlan = await planHelpers.createPlan(planData);
         console.log('✅ Event saved to database');
         
@@ -397,7 +398,7 @@ export function CreateEventWizard() {
         console.log('⚠️ Database save failed, using localStorage fallback');
         
         // Fallback to localStorage
-        const planData = {
+        const localStoragePlanData = {
           id: shareCode,
           name: formData.eventName,
           date: formData.eventDate,
@@ -415,7 +416,7 @@ export function CreateEventWizard() {
         
         const existingPlans = localStorage.getItem('plans');
         const plans = existingPlans ? JSON.parse(existingPlans) : [];
-        plans.push(planData);
+        plans.push(localStoragePlanData);
         localStorage.setItem('plans', JSON.stringify(plans));
       }
       
