@@ -154,39 +154,63 @@ export default function ManageEventPage() {
         .filter(rsvp => rsvp.email)
         .map(rsvp => rsvp.email!)
 
+      let successCount = 0
+      let errorCount = 0
+
       for (const email of emails) {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: email,
-            subject: `Update about "${plan.name}"`,
-            html: `
-              <h2>Event Update</h2>
-              <p>Hi there!</p>
-              <p><strong>${plan.creator_name}</strong> sent you an update about <strong>"${plan.name}"</strong></p>
-              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                ${emailMessage.replace(/\n/g, '<br>')}
-              </div>
-              <p><strong>Event Details:</strong></p>
-              <ul>
-                <li><strong>Date:</strong> ${plan.date}</li>
-                <li><strong>Time:</strong> ${plan.time}</li>
-                ${plan.location_name ? `<li><strong>Location:</strong> ${plan.location_name}</li>` : ''}
-              </ul>
-              <br>
-              <a href="${window.location.origin}/join/${plan.share_code}" style="background: #ffb829; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Event</a>
-              <br><br>
-              <p style="color: #64748b; font-size: 14px;">This message was sent by the event organizer.</p>
-            `
+        try {
+          const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: `Update about "${plan.name}"`,
+              html: `
+                <h2>Event Update</h2>
+                <p>Hi there!</p>
+                <p><strong>${plan.creator_name}</strong> sent you an update about <strong>"${plan.name}"</strong></p>
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  ${emailMessage.replace(/\n/g, '<br>')}
+                </div>
+                <p><strong>Event Details:</strong></p>
+                <ul>
+                  <li><strong>Date:</strong> ${plan.date}</li>
+                  <li><strong>Time:</strong> ${plan.time}</li>
+                  ${plan.location_name ? `<li><strong>Location:</strong> ${plan.location_name}</li>` : ''}
+                </ul>
+                <br>
+                <a href="${window.location.origin}/join/${plan.share_code}" style="background: #ffb829; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Event</a>
+                <br><br>
+                <p style="color: #64748b; font-size: 14px;">This message was sent by the event organizer.</p>
+              `
+            })
           })
-        })
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            console.error(`Failed to send email to ${email}:`, errorData)
+            errorCount++
+          } else {
+            successCount++
+          }
+        } catch (error) {
+          console.error(`Error sending email to ${email}:`, error)
+          errorCount++
+        }
       }
 
-      toast({
-        title: "Emails Sent",
-        description: `Sent update to ${emails.length} attendees`
-      })
+      if (errorCount > 0) {
+        toast({
+          title: "Email Results",
+          description: `Sent to ${successCount} attendees, ${errorCount} failed`,
+          variant: successCount > 0 ? "default" : "destructive"
+        })
+      } else {
+        toast({
+          title: "Emails Sent",
+          description: `Successfully sent to ${successCount} attendees`
+        })
+      }
       setEmailMessage('')
     } catch (error) {
       console.error('Error sending emails:', error)

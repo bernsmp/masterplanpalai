@@ -20,11 +20,14 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
+      console.error('RESEND_API_KEY not found in environment variables');
       return NextResponse.json(
         { error: 'Resend API key not configured' },
         { status: 500 }
       );
     }
+
+    console.log('Resend API key found, length:', apiKey.length);
 
     const resend = new Resend(apiKey);
     const body: EmailRequest = await request.json();
@@ -48,8 +51,9 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Resend error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: `Failed to send email: ${error.message || 'Unknown error'}` },
+        { error: `Failed to send email: ${error.message || 'Unknown error'}`, details: error },
         { status: 500 }
       );
     }
