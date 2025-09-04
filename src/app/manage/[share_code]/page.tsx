@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { planHelpers } from "@/lib/supabase"
 import { useToastContext } from "@/components/ui/toast-provider"
 
@@ -58,6 +59,29 @@ export default function ManageEventPage() {
   const [creatorEmail, setCreatorEmail] = useState('')
   const [isVerified, setIsVerified] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  
+  // Communication states
+  const [emailMessage, setEmailMessage] = useState('')
+  const [smsMessage, setSmsMessage] = useState('')
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
+  const [isSendingSms, setIsSendingSms] = useState(false)
+  
+  // Attendee management states
+  const [newAttendeeName, setNewAttendeeName] = useState('')
+  const [newAttendeeEmail, setNewAttendeeEmail] = useState('')
+  const [isAddingAttendee, setIsAddingAttendee] = useState(false)
+  
+  // Event management states
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    date: '',
+    time: '',
+    location_name: '',
+    location_address: '',
+    description: ''
+  })
 
   // Load plan data
   useEffect(() => {
@@ -101,6 +125,260 @@ export default function ManageEventPage() {
         description: "This email is not the event creator",
         variant: "destructive"
       })
+    }
+  }
+
+  // Communication handlers
+  const handleEmailAllAttendees = async () => {
+    if (!plan || !plan.rsvps || plan.rsvps.length === 0) {
+      toast({
+        title: "No Attendees",
+        description: "No attendees to email yet",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!emailMessage.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message to send",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsSendingEmail(true)
+    try {
+      const emails = plan.rsvps
+        .filter(rsvp => rsvp.email)
+        .map(rsvp => rsvp.email!)
+
+      for (const email of emails) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            subject: `Update about "${plan.name}"`,
+            html: `
+              <h2>Event Update</h2>
+              <p>Hi there!</p>
+              <p><strong>${plan.creator_name}</strong> sent you an update about <strong>"${plan.name}"</strong></p>
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                ${emailMessage.replace(/\n/g, '<br>')}
+              </div>
+              <p><strong>Event Details:</strong></p>
+              <ul>
+                <li><strong>Date:</strong> ${plan.date}</li>
+                <li><strong>Time:</strong> ${plan.time}</li>
+                ${plan.location_name ? `<li><strong>Location:</strong> ${plan.location_name}</li>` : ''}
+              </ul>
+              <br>
+              <a href="${window.location.origin}/join/${plan.share_code}" style="background: #ffb829; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Event</a>
+              <br><br>
+              <p style="color: #64748b; font-size: 14px;">This message was sent by the event organizer.</p>
+            `
+          })
+        })
+      }
+
+      toast({
+        title: "Emails Sent",
+        description: `Sent update to ${emails.length} attendees`
+      })
+      setEmailMessage('')
+    } catch (error) {
+      console.error('Error sending emails:', error)
+      toast({
+        title: "Error",
+        description: "Failed to send emails. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSendingEmail(false)
+    }
+  }
+
+  const handleSmsAllAttendees = async () => {
+    if (!plan || !plan.rsvps || plan.rsvps.length === 0) {
+      toast({
+        title: "No Attendees",
+        description: "No attendees to text yet",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!smsMessage.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message to send",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsSendingSms(true)
+    try {
+      const phoneNumbers = plan.rsvps
+        .filter(rsvp => rsvp.email) // For now, we'll use email as phone placeholder
+        .map(rsvp => rsvp.email!)
+
+      for (const phone of phoneNumbers) {
+        await fetch('/api/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: phone,
+            message: `Event Update: ${plan.name}\n\n${smsMessage}\n\nView: ${window.location.origin}/join/${plan.share_code}`
+          })
+        })
+      }
+
+      toast({
+        title: "Texts Sent",
+        description: `Sent update to ${phoneNumbers.length} attendees`
+      })
+      setSmsMessage('')
+    } catch (error) {
+      console.error('Error sending texts:', error)
+      toast({
+        title: "Error",
+        description: "Failed to send texts. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSendingSms(false)
+    }
+  }
+
+  // Attendee management handlers
+  const handleAddAttendee = async () => {
+    if (!plan || !newAttendeeName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter attendee name",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsAddingAttendee(true)
+    try {
+      await planHelpers.submitRSVP(plan.id, {
+        name: newAttendeeName.trim(),
+        email: newAttendeeEmail.trim() || undefined,
+        response: 'going' // Default to going when manually added
+      })
+
+      // Reload plan data
+      const updatedPlan = await planHelpers.getPlanByShareCode(shareCode)
+      setPlan(updatedPlan)
+
+      toast({
+        title: "Attendee Added",
+        description: `${newAttendeeName} has been added to the event`
+      })
+
+      setNewAttendeeName('')
+      setNewAttendeeEmail('')
+    } catch (error) {
+      console.error('Error adding attendee:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add attendee. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsAddingAttendee(false)
+    }
+  }
+
+  // Event management handlers
+  const handleEditEvent = () => {
+    if (!plan) return
+    setEditFormData({
+      name: plan.name,
+      date: plan.date,
+      time: plan.time,
+      location_name: plan.location_name || '',
+      location_address: plan.location_address || '',
+      description: plan.description || ''
+    })
+    setIsEditingEvent(true)
+  }
+
+  const handleSaveEvent = async () => {
+    if (!plan) return
+
+    try {
+      // Update event in database
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await supabase
+        .from('plans')
+        .update({
+          name: editFormData.name,
+          date: editFormData.date,
+          time: editFormData.time,
+          location_name: editFormData.location_name,
+          location_address: editFormData.location_address,
+          description: editFormData.description,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', plan.id)
+
+      if (error) throw error
+
+      // Reload plan data
+      const updatedPlan = await planHelpers.getPlanByShareCode(shareCode)
+      setPlan(updatedPlan)
+
+      toast({
+        title: "Event Updated",
+        description: "Event details have been saved"
+      })
+
+      setIsEditingEvent(false)
+    } catch (error) {
+      console.error('Error updating event:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update event. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!plan) return
+
+    try {
+      // Delete event from database
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await supabase
+        .from('plans')
+        .delete()
+        .eq('id', plan.id)
+
+      if (error) throw error
+
+      toast({
+        title: "Event Deleted",
+        description: "Event has been permanently deleted"
+      })
+
+      // Redirect to my plans
+      router.push('/my-plans')
+    } catch (error) {
+      console.error('Error deleting event:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDeletingEvent(false)
     }
   }
 
@@ -214,6 +492,18 @@ export default function ManageEventPage() {
               </Button>
               <Button 
                 variant="outline"
+                onClick={handleEditEvent}
+              >
+                Edit Event
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => setIsDeletingEvent(true)}
+              >
+                Delete Event
+              </Button>
+              <Button 
+                variant="outline"
                 onClick={() => router.push('/my-plans')}
               >
                 My Events
@@ -315,18 +605,122 @@ export default function ManageEventPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button className="h-auto p-4 flex flex-col items-center gap-2">
-                    <span className="text-2xl">📧</span>
-                    <span>Email All Attendees</span>
-                  </Button>
-                  <Button className="h-auto p-4 flex flex-col items-center gap-2">
-                    <span className="text-2xl">📱</span>
-                    <span>Text All Attendees</span>
-                  </Button>
-                  <Button className="h-auto p-4 flex flex-col items-center gap-2">
-                    <span className="text-2xl">👥</span>
-                    <span>Add Attendee</span>
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="h-auto p-4 flex flex-col items-center gap-2" disabled={!plan?.rsvps?.length}>
+                        <span className="text-2xl">📧</span>
+                        <span>Email All Attendees</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Email All Attendees</DialogTitle>
+                        <DialogDescription>
+                          Send an update to all {plan?.rsvps?.length || 0} attendees
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="email-message">Message</Label>
+                          <Textarea
+                            id="email-message"
+                            value={emailMessage}
+                            onChange={(e) => setEmailMessage(e.target.value)}
+                            placeholder="Enter your message to all attendees..."
+                            className="min-h-[100px]"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleEmailAllAttendees}
+                          disabled={isSendingEmail || !emailMessage.trim()}
+                          className="w-full"
+                        >
+                          {isSendingEmail ? "Sending..." : "Send Email to All"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="h-auto p-4 flex flex-col items-center gap-2" disabled={!plan?.rsvps?.length}>
+                        <span className="text-2xl">📱</span>
+                        <span>Text All Attendees</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Text All Attendees</DialogTitle>
+                        <DialogDescription>
+                          Send a text message to all {plan?.rsvps?.length || 0} attendees
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="sms-message">Message</Label>
+                          <Textarea
+                            id="sms-message"
+                            value={smsMessage}
+                            onChange={(e) => setSmsMessage(e.target.value)}
+                            placeholder="Enter your text message..."
+                            className="min-h-[100px]"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleSmsAllAttendees}
+                          disabled={isSendingSms || !smsMessage.trim()}
+                          className="w-full"
+                        >
+                          {isSendingSms ? "Sending..." : "Send Text to All"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="h-auto p-4 flex flex-col items-center gap-2">
+                        <span className="text-2xl">👥</span>
+                        <span>Add Attendee</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Attendee</DialogTitle>
+                        <DialogDescription>
+                          Manually add someone to your event
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="attendee-name">Name *</Label>
+                          <Input
+                            id="attendee-name"
+                            value={newAttendeeName}
+                            onChange={(e) => setNewAttendeeName(e.target.value)}
+                            placeholder="Enter attendee name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="attendee-email">Email (optional)</Label>
+                          <Input
+                            id="attendee-email"
+                            type="email"
+                            value={newAttendeeEmail}
+                            onChange={(e) => setNewAttendeeEmail(e.target.value)}
+                            placeholder="Enter attendee email"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleAddAttendee}
+                          disabled={isAddingAttendee || !newAttendeeName.trim()}
+                          className="w-full"
+                        >
+                          {isAddingAttendee ? "Adding..." : "Add Attendee"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
@@ -421,6 +815,117 @@ export default function ManageEventPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Event Dialog */}
+        <Dialog open={isEditingEvent} onOpenChange={setIsEditingEvent}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Event</DialogTitle>
+              <DialogDescription>
+                Update your event details
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-name">Event Name *</Label>
+                  <Input
+                    id="edit-name"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter event name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-date">Date *</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editFormData.date}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-time">Time *</Label>
+                  <Input
+                    id="edit-time"
+                    type="time"
+                    value={editFormData.time}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, time: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-location">Location Name</Label>
+                  <Input
+                    id="edit-location"
+                    value={editFormData.location_name}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, location_name: e.target.value }))}
+                    placeholder="Enter location name"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-address">Location Address</Label>
+                <Input
+                  id="edit-address"
+                  value={editFormData.location_address}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, location_address: e.target.value }))}
+                  placeholder="Enter full address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter event description"
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsEditingEvent(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveEvent}
+                  disabled={!editFormData.name || !editFormData.date || !editFormData.time}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Event Dialog */}
+        <Dialog open={isDeletingEvent} onOpenChange={setIsDeletingEvent}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Event</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{plan?.name}"? This action cannot be undone and will remove all RSVPs and data associated with this event.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline"
+                onClick={() => setIsDeletingEvent(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteEvent}
+              >
+                Delete Event
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
