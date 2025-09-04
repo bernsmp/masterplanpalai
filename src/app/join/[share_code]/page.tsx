@@ -158,65 +158,32 @@ export default function JoinPage() {
     }
   }, [shareCode, userEmail, dbPlan])
 
-  const handleRSVP = (status: 'going' | 'not_going' | 'maybe') => {
-    if (!userName.trim() || !userEmail.trim()) {
-      alert("Please enter your name and email first")
+  // Add this RSVP handler function
+  const handleRSVP = async (response: 'going' | 'not-going' | 'maybe') => {
+    if (!dbPlan) {
+      alert('Plan not loaded yet')
       return
     }
-
-    setIsSubmitting(true)
     
     try {
-      // Get existing RSVPs from localStorage
-      const rsvpsData = localStorage.getItem('rsvps')
-      const allRsvps = rsvpsData ? JSON.parse(rsvpsData) : []
+      // Simple prompt for now (you can make this prettier later)
+      const name = prompt('Your name:')
+      if (!name) return // User cancelled
       
-      // Check if user already has an RSVP
-      const existingRSVP = allRsvps.find((r: RSVP) => r.user_email === userEmail && r.plan_id === shareCode)
-
-      if (existingRSVP) {
-        // Update existing RSVP
-        const updatedRsvps = allRsvps.map((r: RSVP) => 
-          r.user_email === userEmail && r.plan_id === shareCode 
-            ? { ...r, status, user_name: userName, created_at: new Date().toISOString() }
-            : r
-        )
-        localStorage.setItem('rsvps', JSON.stringify(updatedRsvps))
-      } else {
-        // Create new RSVP
-        const newRSVP: RSVP = {
-          id: `rsvp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          plan_id: shareCode,
-          user_email: userEmail,
-          user_name: userName,
-          status,
-          created_at: new Date().toISOString()
-        }
-        
-        const updatedRsvps = [...allRsvps, newRSVP]
-        localStorage.setItem('rsvps', JSON.stringify(updatedRsvps))
-      }
-
-      // Update local state
-      const updatedRsvps = JSON.parse(localStorage.getItem('rsvps') || '[]')
-      const planRsvps = updatedRsvps.filter((r: RSVP) => r.plan_id === shareCode)
-      setRsvps(planRsvps)
-
-      // Calculate counts
-      const counts = {
-        going: planRsvps.filter((r: RSVP) => r.status === 'going').length,
-        not_going: planRsvps.filter((r: RSVP) => r.status === 'not_going').length,
-        maybe: planRsvps.filter((r: RSVP) => r.status === 'maybe').length
-      }
-      setRsvpCounts(counts)
-
-      setCurrentUserRSVP(status)
+      await planHelpers.submitRSVP(dbPlan.id, {
+        name: name,
+        email: prompt('Your email (optional):') || undefined,
+        response: response
+      })
+      
+      alert(`Thanks ${name}! You're ${response} to ${dbPlan.name}!`)
+      
+      // Reload to show updated RSVP count
+      window.location.reload()
       
     } catch (error) {
-      console.error('Error updating RSVP:', error)
-      alert('Failed to save RSVP. Please try again.')
-    } finally {
-      setIsSubmitting(false)
+      console.error('RSVP error:', error)
+      alert('Sorry, there was an error with your RSVP')
     }
   }
 
@@ -603,7 +570,7 @@ export default function JoinPage() {
                   </Button>
                   <Button
                     variant={currentUserRSVP === 'not_going' ? 'default' : 'outline'}
-                    onClick={() => handleRSVP('not_going')}
+                    onClick={() => handleRSVP('not-going')}
                     disabled={isSubmitting || !userName.trim() || !userEmail.trim()}
                     className="flex flex-col items-center gap-2 py-6"
                   >
