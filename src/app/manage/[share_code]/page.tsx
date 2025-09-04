@@ -325,13 +325,60 @@ export default function ManageEventPage() {
         response: 'going' // Default to going when manually added
       })
 
+      // Send invitation email if email is provided
+      if (newAttendeeEmail.trim()) {
+        try {
+          const joinUrl = `${window.location.origin}/join/${shareCode}`;
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">You're Invited to ${plan.name}!</h2>
+              <p>Hi ${newAttendeeName.trim()},</p>
+              <p>You've been added to an event:</p>
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 10px 0;">${plan.name}</h3>
+                <p style="margin: 5px 0;"><strong>Date:</strong> ${plan.date}</p>
+                <p style="margin: 5px 0;"><strong>Time:</strong> ${plan.time}</p>
+                ${plan.location_name ? `<p style="margin: 5px 0;"><strong>Location:</strong> ${plan.location_name}</p>` : ''}
+                ${plan.description ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${plan.description}</p>` : ''}
+              </div>
+              <p>Click the button below to view event details and RSVP:</p>
+              <a href="${joinUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">View Event</a>
+              <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
+                If the button doesn't work, copy and paste this link: ${joinUrl}
+              </p>
+            </div>
+          `;
+
+          const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              to: newAttendeeEmail.trim(),
+              subject: `You're invited to ${plan.name}!`,
+              html: emailHtml,
+            }),
+          });
+
+          if (response.ok) {
+            console.log(`✅ Invitation sent to ${newAttendeeEmail}`);
+          } else {
+            const error = await response.json();
+            console.error(`❌ Failed to send invitation to ${newAttendeeEmail}:`, error);
+          }
+        } catch (emailError) {
+          console.error(`❌ Error sending invitation to ${newAttendeeEmail}:`, emailError);
+        }
+      }
+
       // Reload plan data
       const updatedPlan = await planHelpers.getPlanByShareCode(shareCode)
       setPlan(updatedPlan)
 
       toast({
         title: "Attendee Added",
-        description: `${newAttendeeName} has been added to the event`
+        description: `${newAttendeeName} has been added to the event${newAttendeeEmail.trim() ? ' and invitation sent' : ''}`
       })
 
       setNewAttendeeName('')

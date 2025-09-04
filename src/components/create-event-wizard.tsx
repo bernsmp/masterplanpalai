@@ -246,6 +246,112 @@ export function CreateEventWizard() {
     }
   };
 
+  // Send invitation emails
+  const sendInvitationEmails = async (planData: any, shareCode: string) => {
+    const validInvites = formData.invites.filter(invite => invite.email && invite.email.trim());
+    
+    if (validInvites.length === 0) {
+      console.log('No valid email invites to send');
+      return;
+    }
+
+    console.log(`Sending ${validInvites.length} invitation emails...`);
+
+    // Send emails to invited guests
+    for (const invite of validInvites) {
+      try {
+        const joinUrl = `${window.location.origin}/join/${shareCode}`;
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">You're Invited to ${planData.name}!</h2>
+            <p>Hi ${invite.name || 'there'},</p>
+            <p>You've been invited to join an event:</p>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0;">${planData.name}</h3>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${planData.date}</p>
+              <p style="margin: 5px 0;"><strong>Time:</strong> ${planData.time}</p>
+              ${planData.location_name ? `<p style="margin: 5px 0;"><strong>Location:</strong> ${planData.location_name}</p>` : ''}
+              ${planData.description ? `<p style="margin: 5px 0;"><strong>Description:</strong> ${planData.description}</p>` : ''}
+            </div>
+            <p>Click the button below to RSVP and join the event:</p>
+            <a href="${joinUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">Join Event</a>
+            <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
+              If the button doesn't work, copy and paste this link: ${joinUrl}
+            </p>
+          </div>
+        `;
+
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: invite.email,
+            subject: `You're invited to ${planData.name}!`,
+            html: emailHtml,
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`✅ Invitation sent to ${invite.email}`);
+        } else {
+          const error = await response.json();
+          console.error(`❌ Failed to send invitation to ${invite.email}:`, error);
+        }
+      } catch (error) {
+        console.error(`❌ Error sending invitation to ${invite.email}:`, error);
+      }
+    }
+
+    // Send confirmation email to creator
+    if (formData.creatorEmail && formData.creatorEmail.trim()) {
+      try {
+        const manageUrl = `${window.location.origin}/manage/${shareCode}`;
+        const creatorEmailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Event Created Successfully!</h2>
+            <p>Hi ${formData.creatorName || 'there'},</p>
+            <p>Your event "${planData.name}" has been created and invitations have been sent to your guests.</p>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0;">${planData.name}</h3>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${planData.date}</p>
+              <p style="margin: 5px 0;"><strong>Time:</strong> ${planData.time}</p>
+              ${planData.location_name ? `<p style="margin: 5px 0;"><strong>Location:</strong> ${planData.location_name}</p>` : ''}
+              <p style="margin: 5px 0;"><strong>Share Code:</strong> ${shareCode}</p>
+            </div>
+            <p>Manage your event and track RSVPs:</p>
+            <a href="${manageUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">Manage Event</a>
+            <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
+              If the button doesn't work, copy and paste this link: ${manageUrl}
+            </p>
+          </div>
+        `;
+
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: formData.creatorEmail,
+            subject: `Event Created: ${planData.name}`,
+            html: creatorEmailHtml,
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`✅ Confirmation sent to creator ${formData.creatorEmail}`);
+        } else {
+          const error = await response.json();
+          console.error(`❌ Failed to send confirmation to creator:`, error);
+        }
+      } catch (error) {
+        console.error(`❌ Error sending confirmation to creator:`, error);
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     // Prevent double submission
     if (isSubmitting || isSubmitted) {
@@ -315,17 +421,13 @@ export function CreateEventWizard() {
       
       // Send invitations if provided
       if (formData.invites.length > 0) {
-        // Format emails and phones for sending
-        const emails = formData.invites
-          .filter(i => i.email)
-          .map(i => i.email)
-          .join(',');
-        const phones = formData.invites
-          .filter(i => i.phone)
-          .map(i => i.phone)
-          .join(',');
-        
-        // TODO: Send invitations via API
+        try {
+          await sendInvitationEmails(planData, shareCode);
+          console.log('✅ Invitation emails sent successfully');
+        } catch (emailError) {
+          console.error('⚠️ Email sending failed:', emailError);
+          // Don't fail the entire process if emails fail
+        }
       }
       
       setToastMessage("Plan created successfully!");
