@@ -163,11 +163,14 @@ export default function JoinPage() {
   // Add this RSVP handler function
   const handleRSVP = async (response: 'going' | 'not-going' | 'maybe') => {
     try {
-      // Simple prompt for now (you can make this prettier later)
-      const name = prompt('Your name:')
-      if (!name) return // User cancelled
+      // Use form values instead of prompts
+      if (!userName.trim()) {
+        alert('Please enter your name first')
+        return
+      }
       
-      const email = prompt('Your email (optional):') || undefined
+      const name = userName.trim()
+      const email = userEmail.trim() || undefined
       
       // Try database first if available
       if (dbPlan && planHelpers.isConfigured()) {
