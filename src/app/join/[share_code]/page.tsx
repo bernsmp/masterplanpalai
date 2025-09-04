@@ -12,6 +12,7 @@ import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, 
 import VenueDetailsComponent from "@/components/venue-details"
 import { supabase, planHelpers } from "@/lib/supabase"
 import { VotingInterface } from "@/components/voting/VotingInterface"
+import DatePollingResults from "@/components/date-polling-results"
 
 interface Plan {
   id: string
@@ -897,7 +898,7 @@ export default function JoinPage() {
                     <Mail className="w-4 h-4" />
                     Send Email
                   </Button>
-                </div>
+                          </div>
               </CardContent>
             </Card>
 
@@ -909,13 +910,13 @@ export default function JoinPage() {
                   <div className="text-center">
                     <span className="inline-flex items-center bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium mb-2">
                       ✨ NEW: Advanced Voting System
-                    </span>
+                              </span>
                     <h3 className="text-xl font-semibold text-slate-800">
                       Vote on dates, venues, and activities
                     </h3>
-                  </div>
-                </div>
-                
+                            </div>
+                          </div>
+
                 <VotingInterface
                   planId={dbPlan.id}
                   shareCode={params.share_code as string}
@@ -923,7 +924,7 @@ export default function JoinPage() {
                   existingVotes={dbPlan.availability || []}
                   currentUserEmail={userEmail}
                 />
-                  </div>
+                          </div>
                 )}
 
             {/* Venue Information - Only show if venue is selected */}
@@ -944,8 +945,8 @@ export default function JoinPage() {
                     showFullDetails={true}
                     className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
                   />
-              </CardContent>
-            </Card>
+                      </CardContent>
+                    </Card>
                 )}
           </div>
 
@@ -1064,30 +1065,10 @@ export default function JoinPage() {
               </CardContent>
             </Card>
 
-            {/* Event Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Event Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <p className="font-medium">Created</p>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {new Date(plan.createdAt || Date.now()).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium">Share Code</p>
-                  <p className="text-slate-600 dark:text-slate-400 font-mono text-xs">
-                    {shareCode}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Date Polling Results */}
+            {dbPlan?.date_options && dbPlan.date_options.length > 0 && (
+              <DatePollingResults dateOptions={dbPlan.date_options} />
+            )}
 
             {/* How to Use */}
             <Card>
