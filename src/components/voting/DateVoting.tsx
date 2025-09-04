@@ -20,6 +20,8 @@ interface DateVotingProps {
   getVotesForItem: (category: string, itemId: string) => any[]
   getVoteWeight: (category: string, itemId: string) => number
   users: any[]
+  dateOptions?: any[]
+  existingVotes?: any[]
 }
 
 interface DateOption {
@@ -41,58 +43,44 @@ export const DateVoting: React.FC<DateVotingProps> = ({
   getVotesForItem,
   getVoteWeight,
   users,
+  dateOptions = [],
+  existingVotes = [],
 }) => {
-  const [dates] = useState<DateOption[]>([
+  // Use real date options from props, or fallback to mock data
+  const dates = dateOptions.length > 0 ? dateOptions.map((option: any) => {
+    const availableCount = option.availability?.filter((a: any) => a.is_available).length || 0
+    const totalVotes = option.availability?.length || 0
+    const availabilityPercentage = totalVotes > 0 ? Math.round((availableCount / totalVotes) * 100) : 0
+    
+    return {
+      id: option.id,
+      date: option.option_date,
+      dayName: new Date(option.option_date).toLocaleDateString('en-US', { weekday: 'long' }),
+      weather: {
+        icon: 'sun' as const, // Default to sun for now
+        temp: 72, // Default temperature
+        description: 'Good weather',
+      },
+      availability: availabilityPercentage,
+      conflicts: [],
+      isOptimal: availabilityPercentage > 80, // Mark as optimal if >80% available
+    }
+  }) : [
+    // Fallback mock data if no real data
     {
       id: 'date1',
       date: '2024-03-15',
       dayName: 'Friday',
       weather: {
-        icon: 'sun',
+        icon: 'sun' as const,
         temp: 72,
         description: 'Sunny',
       },
-      availability: 85,
+      availability: 0, // Hide percentage until real data
       conflicts: [],
-      isOptimal: true,
+      isOptimal: false,
     },
-    {
-      id: 'date2',
-      date: '2024-03-16',
-      dayName: 'Saturday',
-      weather: {
-        icon: 'cloud',
-        temp: 68,
-        description: 'Partly Cloudy',
-      },
-      availability: 92,
-      conflicts: [],
-    },
-    {
-      id: 'date3',
-      date: '2024-03-17',
-      dayName: 'Sunday',
-      weather: {
-        icon: 'rain',
-        temp: 65,
-        description: 'Light Rain',
-      },
-      availability: 78,
-      conflicts: ["St. Patrick's Day"],
-    },
-    {
-      id: 'date4',
-      date: '2024-03-22',
-      dayName: 'Friday',
-      weather: {
-        icon: 'sun',
-        temp: 75,
-        description: 'Clear',
-      },
-      availability: 70,
-      conflicts: [],
-    },
-  ])
+  ]
 
   const getWeatherIcon = (icon: string) => {
     switch (icon) {
@@ -177,12 +165,12 @@ export const DateVoting: React.FC<DateVotingProps> = ({
                 <div className="flex justify-between items-center mt-4">
                   <div className="flex -space-x-2">
                     {votes.slice(0, 3).map((vote, index) => (
-                      <img
+                      <div
                         key={index}
-                        src={users.find((u) => u.id === vote.userId)?.avatar}
-                        alt="Voter"
-                        className="w-6 h-6 rounded-full border-2 border-amber-400"
-                      />
+                        className="w-6 h-6 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center text-xs font-medium"
+                      >
+                        {users.find((u) => u.id === vote.userId)?.name?.charAt(0) || '?'}
+                      </div>
                     ))}
                     {votes.length > 3 && (
                       <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-300 flex items-center justify-center text-xs text-white">

@@ -230,12 +230,12 @@ export const ActivityVoting: React.FC<ActivityVotingProps> = ({
                 <div className="flex justify-between items-center">
                   <div className="flex -space-x-2">
                     {votes.slice(0, 3).map((vote, index) => (
-                      <img
+                      <div
                         key={index}
-                        src={users.find((u) => u.id === vote.userId)?.avatar}
-                        alt="Voter"
-                        className="w-6 h-6 rounded-full border-2 border-amber-400"
-                      />
+                        className="w-6 h-6 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center text-xs font-medium"
+                      >
+                        {users.find((u) => u.id === vote.userId)?.name?.charAt(0) || '?'}
+                      </div>
                     ))}
                     {votes.length > 3 && (
                       <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-300 flex items-center justify-center text-xs text-white">

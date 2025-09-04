@@ -36,8 +36,7 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
     {
       id: 'venue1',
       name: 'Rooftop Garden',
-      image:
-        'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=200&fit=crop',
+      image: '/placeholder-venue.jpg', // Use placeholder instead of external URL
       distance: 2.3,
       priceTier: 3,
       rating: 4.8,
@@ -48,8 +47,7 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
     {
       id: 'venue2',
       name: 'Downtown Brewery',
-      image:
-        'https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=300&h=200&fit=crop',
+      image: '/placeholder-venue.jpg',
       distance: 1.8,
       priceTier: 2,
       rating: 4.5,
@@ -60,8 +58,7 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
     {
       id: 'venue3',
       name: 'Art Gallery Loft',
-      image:
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=200&fit=crop',
+      image: '/placeholder-venue.jpg',
       distance: 3.1,
       priceTier: 4,
       rating: 4.9,
@@ -72,8 +69,7 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
     {
       id: 'venue4',
       name: 'Waterfront Cafe',
-      image:
-        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&h=200&fit=crop',
+      image: '/placeholder-venue.jpg',
       distance: 4.2,
       priceTier: 2,
       rating: 4.3,
@@ -179,12 +175,12 @@ export const VenueVoting: React.FC<VenueVotingProps> = ({
                 <div className="flex justify-between items-center">
                   <div className="flex -space-x-2">
                     {votes.slice(0, 3).map((vote, index) => (
-                      <img
+                      <div
                         key={index}
-                        src={users.find((u) => u.id === vote.userId)?.avatar}
-                        alt="Voter"
-                        className="w-6 h-6 rounded-full border-2 border-amber-400"
-                      />
+                        className="w-6 h-6 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center text-xs font-medium"
+                      >
+                        {users.find((u) => u.id === vote.userId)?.name?.charAt(0) || '?'}
+                      </div>
                     ))}
                     {votes.length > 3 && (
                       <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-300 flex items-center justify-center text-xs text-white">

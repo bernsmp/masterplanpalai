@@ -61,32 +61,27 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
     {
       id: '1',
       name: 'Alice',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
+      avatar: '/placeholder-avatar.jpg',
     },
     {
       id: '2',
       name: 'Bob',
-      avatar:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
+      avatar: '/placeholder-avatar.jpg',
     },
     {
       id: '3',
       name: 'Carol',
-      avatar:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
+      avatar: '/placeholder-avatar.jpg',
     },
     {
       id: '4',
       name: 'David',
-      avatar:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+      avatar: '/placeholder-avatar.jpg',
     },
     {
       id: '5',
       name: 'Eve',
-      avatar:
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face',
+      avatar: '/placeholder-avatar.jpg',
     },
   ])
   const [currentUserId] = useState('1')
@@ -246,6 +241,8 @@ export const VotingInterface: React.FC<VotingInterfaceProps> = ({
               getVotesForItem={getVotesForItem}
               getVoteWeight={getVoteWeight}
               users={users}
+              dateOptions={dateOptions}
+              existingVotes={existingVotes}
             />
           )}
           {activeTab === 'venues' && (
