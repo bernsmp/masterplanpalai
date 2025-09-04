@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin, Users, ArrowLeft, CheckCircle, XCircle, Star, Mail, User } from "lucide-react"
 import VenueDetailsComponent from "@/components/venue-details"
-// import { supabase } from "@/lib/supabase" // Temporarily disabled
+import { supabase, planHelpers } from "@/lib/supabase"
 
 interface Plan {
   id: string
@@ -56,6 +56,26 @@ export default function JoinPage() {
   const router = useRouter()
   const shareCode = params.share_code as string
   
+  // ADD THIS NEW CODE (keeps your existing code working):
+  const [dbPlan, setDbPlan] = useState<any>(null)
+  const [loadingDb, setLoadingDb] = useState(true)
+  
+  useEffect(() => {
+    async function loadFromDatabase() {
+      try {
+        const data = await planHelpers.getPlanByShareCode(shareCode)
+        setDbPlan(data)
+        console.log('✅ Loaded from database:', data)
+      } catch (error) {
+        console.log('⚠️ Database not connected, using mock data')
+      } finally {
+        setLoadingDb(false)
+      }
+    }
+    
+    loadFromDatabase()
+  }, [shareCode])
+
   const [plan, setPlan] = useState<Plan | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,19 +98,29 @@ export default function JoinPage() {
         setLoading(true)
         setError(null)
 
-        // Fetch plans from localStorage
-        const plansData = localStorage.getItem('plans')
-        if (!plansData) {
-          setError('Event not found')
-          return
-        }
+        // Use database data if available, otherwise fall back to localStorage
+        let planData = null
+        
+        if (dbPlan) {
+          // Use data from database
+          planData = dbPlan
+          console.log('✅ Using database data for plan')
+        } else {
+          // Fall back to localStorage
+          const plansData = localStorage.getItem('plans')
+          if (!plansData) {
+            setError('Event not found')
+            return
+          }
 
-        const plans = JSON.parse(plansData)
-        const planData = plans.find((p: any) => p.id === shareCode)
+          const plans = JSON.parse(plansData)
+          planData = plans.find((p: any) => p.id === shareCode)
 
-        if (!planData) {
-          setError('Event not found')
-          return
+          if (!planData) {
+            setError('Event not found')
+            return
+          }
+          console.log('⚠️ Using localStorage fallback data')
         }
 
         setPlan(planData)
@@ -126,7 +156,7 @@ export default function JoinPage() {
     if (shareCode) {
       fetchPlanAndRSVPs()
     }
-  }, [shareCode, userEmail])
+  }, [shareCode, userEmail, dbPlan])
 
   const handleRSVP = (status: 'going' | 'not_going' | 'maybe') => {
     if (!userName.trim() || !userEmail.trim()) {
