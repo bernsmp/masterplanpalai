@@ -32,7 +32,7 @@ interface Plan {
     id: string
     name: string
     email?: string
-    response: 'going' | 'maybe' | 'not-going'
+    response: 'going' | 'maybe' | 'not_going'
     notes?: string
     created_at: string
   }>
@@ -74,7 +74,7 @@ export default function ManageEventPage() {
   const [editingAttendee, setEditingAttendee] = useState<any>(null)
   const [editAttendeeName, setEditAttendeeName] = useState('')
   const [editAttendeeEmail, setEditAttendeeEmail] = useState('')
-  const [editAttendeeResponse, setEditAttendeeResponse] = useState<'going' | 'maybe' | 'not-going'>('going')
+  const [editAttendeeResponse, setEditAttendeeResponse] = useState<'going' | 'maybe' | 'not_going'>('going')
   const [isSavingAttendee, setIsSavingAttendee] = useState(false)
   
   // Event management states
@@ -608,7 +608,7 @@ export default function ManageEventPage() {
   const rsvpStats = {
     going: plan.rsvps?.filter(r => r.response === 'going').length || 0,
     maybe: plan.rsvps?.filter(r => r.response === 'maybe').length || 0,
-    notGoing: plan.rsvps?.filter(r => r.response === 'not-going').length || 0,
+    notGoing: plan.rsvps?.filter(r => r.response === 'not_going').length || 0,
     total: plan.rsvps?.length || 0
   }
 
@@ -1113,14 +1113,14 @@ export default function ManageEventPage() {
               </div>
               <div>
                 <Label htmlFor="edit-attendee-response">RSVP Status</Label>
-                <Select value={editAttendeeResponse} onValueChange={(value: 'going' | 'maybe' | 'not-going') => setEditAttendeeResponse(value)}>
+                <Select value={editAttendeeResponse} onValueChange={(value: 'going' | 'maybe' | 'not_going') => setEditAttendeeResponse(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="going">Going</SelectItem>
                     <SelectItem value="maybe">Maybe</SelectItem>
-                    <SelectItem value="not-going">Not Going</SelectItem>
+                    <SelectItem value="not_going">Not Going</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
