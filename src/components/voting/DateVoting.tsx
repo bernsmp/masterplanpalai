@@ -52,10 +52,12 @@ export const DateVoting: React.FC<DateVotingProps> = ({
     const totalVotes = option.availability?.length || 0
     const availabilityPercentage = totalVotes > 0 ? Math.round((availableCount / totalVotes) * 100) : 0
     
+    const dateObj = new Date(option.option_date)
+    
     return {
       id: option.id,
       date: option.option_date,
-      dayName: new Date(option.option_date).toLocaleDateString('en-US', { weekday: 'long' }),
+      dayName: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
       weather: {
         icon: 'sun' as const,
         temp: 0, // Hide temperature until we have real weather data
@@ -66,17 +68,43 @@ export const DateVoting: React.FC<DateVotingProps> = ({
       isOptimal: availabilityPercentage > 80, // Mark as optimal if >80% available
     }
   }) : [
-    // Fallback mock data if no real data
+    // Fallback mock data if no real data - use more realistic dates
     {
       id: 'date1',
-      date: '2024-03-15',
-      dayName: 'Friday',
+      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+      dayName: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long' }),
       weather: {
         icon: 'sun' as const,
         temp: 0, // Hide temperature until we have real weather data
         description: '',
       },
       availability: 0, // Hide percentage until real data
+      conflicts: [],
+      isOptimal: false,
+    },
+    {
+      id: 'date2',
+      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
+      dayName: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long' }),
+      weather: {
+        icon: 'sun' as const,
+        temp: 0,
+        description: '',
+      },
+      availability: 0,
+      conflicts: [],
+      isOptimal: false,
+    },
+    {
+      id: 'date3',
+      date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 21 days from now
+      dayName: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long' }),
+      weather: {
+        icon: 'sun' as const,
+        temp: 0,
+        description: '',
+      },
+      availability: 0,
       conflicts: [],
       isOptimal: false,
     },
@@ -109,7 +137,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
         <p className="text-slate-600">Select the best dates for your event</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {dates.map((date) => {
           const votes = getVotesForItem('dates', date.id)
           const voteWeight = getVoteWeight('dates', date.id)
@@ -122,7 +150,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
               progress={progress}
               isSelected={votes.some((v) => v.userId === '1')}
             >
-              <div className="relative min-h-[200px]">
+              <div className="relative">
                 {date.isOptimal && (
                   <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full p-1">
                     <Award size={16} className="text-white" />
@@ -130,16 +158,20 @@ export const DateVoting: React.FC<DateVotingProps> = ({
                 )}
 
                 <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-slate-800 truncate">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-slate-800 mb-1">
                       {date.dayName}
                     </h3>
-                    <p className="text-slate-500 text-sm truncate">
-                      {new Date(date.date).toLocaleDateString()}
+                    <p className="text-slate-600 text-base font-medium">
+                      {new Date(date.date).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
                     </p>
                   </div>
-                  <div className="ml-2 flex-shrink-0">
-                    <ProgressRing progress={date.availability} size={40} />
+                  <div className="ml-3 flex-shrink-0">
+                    <ProgressRing progress={date.availability} size={50} />
                   </div>
                 </div>
 
@@ -155,7 +187,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
                   </div>
                 )}
 
-                <div className="text-sm text-slate-600 mb-3">
+                <div className="text-base text-slate-700 font-medium mb-3">
                   {date.availability}% available
                 </div>
 
@@ -182,7 +214,7 @@ export const DateVoting: React.FC<DateVotingProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-slate-500 text-sm">
+                  <span className="text-slate-600 text-base font-medium">
                     {voteWeight} votes
                   </span>
                 </div>

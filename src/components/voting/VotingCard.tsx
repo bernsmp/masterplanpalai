@@ -16,7 +16,7 @@ export const VotingCard: React.FC<VotingCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative bg-white rounded-2xl p-6 border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md flex flex-col ${
+      className={`relative bg-white rounded-2xl p-6 border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md flex flex-col min-h-[200px] ${
         isSelected
           ? 'border-amber-300 shadow-lg shadow-amber-100'
           : 'border-gray-200 hover:border-amber-200'
