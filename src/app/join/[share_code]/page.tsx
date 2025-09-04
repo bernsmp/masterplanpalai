@@ -130,6 +130,13 @@ export default function JoinPage() {
   // Date voting state
   const [dateVoting, setDateVoting] = useState<{[key: string]: boolean}>({})
   const [isSubmittingVote, setIsSubmittingVote] = useState(false)
+  
+  // RSVP summary toggle state
+  const [showRSVPDetails, setShowRSVPDetails] = useState<{[key: string]: boolean}>({
+    going: false,
+    maybe: false,
+    notGoing: false
+  })
 
   useEffect(() => {
     const fetchPlanAndRSVPs = () => {
@@ -262,14 +269,14 @@ export default function JoinPage() {
       
       // Fallback to localStorage
       const rsvpData = {
-        id: `rsvp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        plan_id: shareCode,
+          id: `rsvp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          plan_id: shareCode,
         user_email: email || 'no-email',
         user_name: name,
         status: response,
-        created_at: new Date().toISOString()
-      }
-      
+          created_at: new Date().toISOString()
+        }
+        
       const existingRsvps = localStorage.getItem('rsvps')
       const allRsvps = existingRsvps ? JSON.parse(existingRsvps) : []
       allRsvps.push(rsvpData)
@@ -305,7 +312,7 @@ export default function JoinPage() {
         })
       
       if (error) throw error
-      
+
       // Update local state
       setDateVoting(prev => ({
         ...prev,
@@ -737,7 +744,7 @@ export default function JoinPage() {
                     disabled={isSubmitting}
                     className="flex flex-col items-center gap-2 py-6"
                   >
-                    <CheckCircle className="w-6 h-6" />
+                    <span className="text-lg">✅</span>
                     <span>I'm Going</span>
                     <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length || 0}</Badge>
                   </Button>
@@ -757,7 +764,7 @@ export default function JoinPage() {
                     disabled={isSubmitting}
                     className="flex flex-col items-center gap-2 py-6"
                   >
-                    <XCircle className="w-6 h-6" />
+                    <span className="text-lg">❌</span>
                     <span>Can't Make It</span>
                     <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
                   </Button>
@@ -900,8 +907,8 @@ export default function JoinPage() {
                   </CardTitle>
                   <CardDescription>
                     Help choose the best date by voting on your availability
-                  </CardDescription>
-                </CardHeader>
+                </CardDescription>
+              </CardHeader>
                 <CardContent className="space-y-4">
                   {dbPlan.date_options.map((option: any) => {
                     const availableCount = option.availability?.filter((a: any) => a.is_available).length || 0
@@ -939,8 +946,8 @@ export default function JoinPage() {
                               />
                             </div>
                           </div>
-                        </div>
-                        
+                          </div>
+
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -960,7 +967,7 @@ export default function JoinPage() {
                           >
                             ❌ Not Available
                           </Button>
-                        </div>
+                            </div>
                         
                         {option.availability && option.availability.length > 0 && (
                           <div className="pt-2 border-t">
@@ -973,9 +980,9 @@ export default function JoinPage() {
                                   className="text-xs"
                                 >
                                   {vote.name} {vote.is_available ? '✅' : '❌'}
-                                </Badge>
+                            </Badge>
                               ))}
-                            </div>
+                          </div>
                           </div>
                         )}
                       </div>
@@ -987,8 +994,8 @@ export default function JoinPage() {
                       Please enter your name above to vote on dates
                     </p>
                   )}
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
             )}
 
             {/* Venue Information - Only show if venue is selected */}
@@ -1009,8 +1016,8 @@ export default function JoinPage() {
                     showFullDetails={true}
                     className="border-2 border-[#ffb829]/20 bg-[#ffb829]/5 rounded-lg p-4"
                   />
-                      </CardContent>
-                    </Card>
+              </CardContent>
+            </Card>
                 )}
           </div>
 
@@ -1022,27 +1029,102 @@ export default function JoinPage() {
                 <CardTitle className="text-lg">RSVP Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Going */}
+                <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-lg">✅</span>
                     Going
                   </span>
-                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length || 0}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length || 0}</Badge>
+                      {dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowRSVPDetails(prev => ({ ...prev, going: !prev.going }))}
+                          className="h-6 w-6 p-0"
+                        >
+                          {showRSVPDetails.going ? '−' : '+'}
+                        </Button>
+                      )}
                 </div>
+                  </div>
+                  {showRSVPDetails.going && dbPlan?.rsvps?.filter((r: any) => r.response === 'going').length > 0 && (
+                    <div className="ml-6 space-y-1">
+                      {dbPlan.rsvps.filter((r: any) => r.response === 'going').map((rsvp: any) => (
+                        <div key={rsvp.id} className="text-sm text-slate-600 dark:text-slate-400">
+                          • {rsvp.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Maybe */}
+                <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <span className="text-lg">🤔</span>
                     Maybe
                   </span>
-                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length || 0}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length || 0}</Badge>
+                      {dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowRSVPDetails(prev => ({ ...prev, maybe: !prev.maybe }))}
+                          className="h-6 w-6 p-0"
+                        >
+                          {showRSVPDetails.maybe ? '−' : '+'}
+                        </Button>
+                      )}
                 </div>
+                  </div>
+                  {showRSVPDetails.maybe && dbPlan?.rsvps?.filter((r: any) => r.response === 'maybe').length > 0 && (
+                    <div className="ml-6 space-y-1">
+                      {dbPlan.rsvps.filter((r: any) => r.response === 'maybe').map((rsvp: any) => (
+                        <div key={rsvp.id} className="text-sm text-slate-600 dark:text-slate-400">
+                          • {rsvp.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Not Going */}
+                <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="flex justify-between items-center">
-                    <XCircle className="w-4 h-4 text-red-600" />
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg">❌</span>
                     Not Going
                   </span>
-                  <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
+                      {dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowRSVPDetails(prev => ({ ...prev, notGoing: !prev.notGoing }))}
+                          className="h-6 w-6 p-0"
+                        >
+                          {showRSVPDetails.notGoing ? '−' : '+'}
+                        </Button>
+                      )}
                 </div>
+                  </div>
+                  {showRSVPDetails.notGoing && dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length > 0 && (
+                    <div className="ml-6 space-y-1">
+                      {dbPlan.rsvps.filter((r: any) => r.response === 'not-going').map((rsvp: any) => (
+                        <div key={rsvp.id} className="text-sm text-slate-600 dark:text-slate-400">
+                          • {rsvp.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="pt-3 border-t">
                   <div className="flex justify-between items-center font-medium">
                     <span>Total Responses</span>
