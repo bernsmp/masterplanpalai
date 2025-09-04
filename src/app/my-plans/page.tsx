@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, MapPin, Users, Plus, Eye, Share2, Mail } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, Plus, Eye, Share2, Mail, Settings } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface Plan {
@@ -87,6 +87,10 @@ export default function MyPlansPage() {
     navigator.clipboard.writeText(shareUrl)
     // You could add a toast notification here
     alert("Share link copied to clipboard!")
+  }
+
+  const handleManageEvent = (shareCode: string) => {
+    router.push(`/manage/${shareCode}`)
   }
 
   const getRSVPCounts = (rsvps: Plan['rsvps']) => {
@@ -265,6 +269,16 @@ export default function MyPlansPage() {
                             >
                               <Eye className="w-4 h-4" />
                               View
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleManageEvent(plan.share_code)}
+                              className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                            >
+                              <Settings className="w-4 h-4" />
+                              Manage
                             </Button>
                             
                             <Button

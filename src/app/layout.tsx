@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import AuthGuard from "@/components/auth-guard";
 import Footer from "@/components/footer";
+import { ToastProvider } from "@/components/ui/toast-provider";
 
 export const metadata: Metadata = {
   title: "PlanPal AI - Smart Planning Assistant",
@@ -93,14 +94,16 @@ export default function RootLayout({
         <meta name="msapplication-TileImage" content="/favicon-192x192.png" />
       </head>
       <body suppressHydrationWarning={true}>
-        <AuthGuard>
-          <div className="flex flex-col min-h-screen">
-            <div className="flex-grow">
-              {children}
+        <ToastProvider>
+          <AuthGuard>
+            <div className="flex flex-col min-h-screen">
+              <div className="flex-grow">
+                {children}
+              </div>
+              <Footer />
             </div>
-            <Footer />
-          </div>
-        </AuthGuard>
+          </AuthGuard>
+        </ToastProvider>
       </body>
     </html>
   );
