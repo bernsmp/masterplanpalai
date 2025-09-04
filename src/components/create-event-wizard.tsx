@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import LocationSearch from "@/components/location-search";
 import VenueRecommendations from "@/components/venue-recommendations";
 import { cn } from "@/lib/utils";
+import { planHelpers } from "@/lib/supabase";
 
 const steps = [
   { id: "basics", title: "Event Basics", icon: Calendar },
@@ -187,28 +188,47 @@ export function CreateEventWizard() {
       // Generate share code
       const shareCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      // Create plan data
-      const planData = {
-        id: shareCode,
-        name: formData.eventName,
-        date: formData.eventDate,
-        time: formData.eventTime,
-        vibe: formData.eventVibe,
-        location: formData.locationName,
-        address: formData.locationAddress,
-        lat: formData.locationLat,
-        lng: formData.locationLng,
-        description: formData.eventDescription,
-        agenda: formData.eventAgenda,
-        createdAt: new Date().toISOString(),
-        creator: 'Anonymous', // Would come from auth
-      };
-      
-      // Store in localStorage
-      const existingPlans = localStorage.getItem('plans');
-      const plans = existingPlans ? JSON.parse(existingPlans) : [];
-      plans.push(planData);
-      localStorage.setItem('plans', JSON.stringify(plans));
+      // Try to save to database first
+      try {
+        const planData = {
+          name: formData.eventName,
+          date: formData.eventDate,
+          time: formData.eventTime,
+          activity_type: formData.eventVibe,
+          share_code: shareCode,
+          location_name: formData.locationName,
+          location_address: formData.locationAddress,
+          description: formData.eventDescription,
+        };
+        
+        await planHelpers.createPlan(planData);
+        console.log('✅ Event saved to database');
+        
+      } catch (dbError) {
+        console.log('⚠️ Database save failed, using localStorage fallback');
+        
+        // Fallback to localStorage
+        const planData = {
+          id: shareCode,
+          name: formData.eventName,
+          date: formData.eventDate,
+          time: formData.eventTime,
+          vibe: formData.eventVibe,
+          location: formData.locationName,
+          address: formData.locationAddress,
+          lat: formData.locationLat,
+          lng: formData.locationLng,
+          description: formData.eventDescription,
+          agenda: formData.eventAgenda,
+          createdAt: new Date().toISOString(),
+          creator: 'Anonymous', // Would come from auth
+        };
+        
+        const existingPlans = localStorage.getItem('plans');
+        const plans = existingPlans ? JSON.parse(existingPlans) : [];
+        plans.push(planData);
+        localStorage.setItem('plans', JSON.stringify(plans));
+      }
       
       // Send invitations if provided
       if (formData.invites.length > 0) {
@@ -228,9 +248,9 @@ export function CreateEventWizard() {
       setToastMessage("Plan created successfully!");
       setShowToast(true);
       
-      // Redirect to plan page
+      // Redirect to join page
       setTimeout(() => {
-        router.push(`/plans/${shareCode}`);
+        router.push(`/join/${shareCode}`);
       }, 1500);
       
     } catch (error) {
