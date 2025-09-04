@@ -42,9 +42,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(to)) {
+      return NextResponse.json(
+        { error: `Invalid email format: ${to}` },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'PlanPal AI <onboarding@resend.dev>',
-      to: [to],
+      to: to, // Send as string instead of array
       subject: subject,
       html: html,
     });

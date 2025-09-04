@@ -150,9 +150,31 @@ export default function ManageEventPage() {
 
     setIsSendingEmail(true)
     try {
+      // Filter and validate emails
       const emails = plan.rsvps
         .filter(rsvp => rsvp.email)
         .map(rsvp => rsvp.email!)
+        .filter(email => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          return emailRegex.test(email)
+        })
+
+      // Check for invalid emails
+      const allEmails = plan.rsvps
+        .filter(rsvp => rsvp.email)
+        .map(rsvp => rsvp.email!)
+      const invalidEmails = allEmails.filter(email => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return !emailRegex.test(email)
+      })
+
+      if (invalidEmails.length > 0) {
+        toast({
+          title: "Invalid Emails Found",
+          description: `Skipping ${invalidEmails.length} invalid email(s): ${invalidEmails.join(', ')}`,
+          variant: "destructive"
+        })
+      }
 
       let successCount = 0
       let errorCount = 0
