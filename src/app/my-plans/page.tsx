@@ -48,7 +48,8 @@ export default function MyPlansPage() {
     setError("")
     
     try {
-      const { data, error: dbError } = await supabase
+      // Load events where user is the creator
+      const { data: createdEvents, error: createdError } = await supabase
         .from('plans')
         .select(`
           *,
@@ -62,11 +63,34 @@ export default function MyPlansPage() {
         .eq('creator_email', email.trim())
         .order('created_at', { ascending: false })
       
-      if (dbError) throw dbError
+      if (createdError) throw createdError
+
+      // Load events where user is an attendee (has an RSVP)
+      const { data: attendedEvents, error: attendedError } = await supabase
+        .from('plans')
+        .select(`
+          *,
+          rsvps (
+            id,
+            name,
+            email,
+            response
+          )
+        `)
+        .eq('rsvps.email', email.trim())
+        .order('created_at', { ascending: false })
       
-      setPlans(data || [])
+      if (attendedError) throw attendedError
+
+      // Combine both lists and remove duplicates (in case user is both creator and attendee)
+      const allEvents = [...(createdEvents || []), ...(attendedEvents || [])]
+      const uniqueEvents = allEvents.filter((event, index, self) => 
+        index === self.findIndex(e => e.id === event.id)
+      )
       
-      if (data && data.length === 0) {
+      setPlans(uniqueEvents)
+      
+      if (uniqueEvents.length === 0) {
         setError("No events found for this email address")
       }
       
@@ -113,7 +137,7 @@ export default function MyPlansPage() {
               My Events
             </h1>
             <p className="text-slate-600 dark:text-slate-400">
-              Enter your email to view and manage your created events
+              Enter your email to view events you created and events you're invited to
             </p>
           </div>
 
@@ -125,7 +149,7 @@ export default function MyPlansPage() {
                 Find Your Events
               </CardTitle>
               <CardDescription>
-                Enter the email address you used when creating events
+                Enter the email address you used when creating events or the email you were invited with
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -190,6 +214,15 @@ export default function MyPlansPage() {
                               <Badge variant="outline" className="text-xs">
                                 {plan.share_code}
                               </Badge>
+                              {plan.creator_email === email.trim() ? (
+                                <Badge className="bg-green-100 text-green-800 border-green-200">
+                                  Creator
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                                  Invited
+                                </Badge>
+                              )}
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -271,15 +304,17 @@ export default function MyPlansPage() {
                               View
                             </Button>
                             
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleManageEvent(plan.share_code)}
-                              className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                            >
-                              <Settings className="w-4 h-4" />
-                              Manage
-                            </Button>
+                            {plan.creator_email === email.trim() && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleManageEvent(plan.share_code)}
+                                className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                              >
+                                <Settings className="w-4 h-4" />
+                                Manage
+                              </Button>
+                            )}
                             
                             <Button
                               variant="outline"
