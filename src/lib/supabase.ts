@@ -89,7 +89,7 @@ export const planHelpers = {
   async submitRSVP(planId: string, rsvpData: {
     name: string
     email?: string
-    response: 'going' | 'not-going' | 'maybe'
+    response: 'going' | 'not_going' | 'maybe'
     notes?: string
   }) {
     if (!this.isConfigured()) {

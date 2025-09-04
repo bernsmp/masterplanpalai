@@ -216,13 +216,16 @@ export default function JoinPage() {
       const name = userName.trim()
       const email = userEmail.trim() || undefined
       
+      // Map response values to match database schema
+      const dbResponse = response === 'not-going' ? 'not_going' : response
+      
       // Try database first if available
       if (dbPlan && planHelpers.isConfigured()) {
         try {
           await planHelpers.submitRSVP(dbPlan.id, {
             name: name,
             email: email,
-            response: response,
+            response: dbResponse as 'going' | 'not_going' | 'maybe',
             notes: rsvpNotes || undefined
           })
           
@@ -766,7 +769,7 @@ export default function JoinPage() {
                   >
                     <span className="text-lg">❌</span>
                     <span>Can't Make It</span>
-                    <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
+                    <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not_going').length || 0}</Badge>
                   </Button>
                 </div>
 
@@ -1101,8 +1104,8 @@ export default function JoinPage() {
                     Not Going
                   </span>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length || 0}</Badge>
-                      {dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length > 0 && (
+                      <Badge variant="secondary">{dbPlan?.rsvps?.filter((r: any) => r.response === 'not_going').length || 0}</Badge>
+                      {dbPlan?.rsvps?.filter((r: any) => r.response === 'not_going').length > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1114,9 +1117,9 @@ export default function JoinPage() {
                       )}
                 </div>
                   </div>
-                  {showRSVPDetails.notGoing && dbPlan?.rsvps?.filter((r: any) => r.response === 'not-going').length > 0 && (
+                  {showRSVPDetails.notGoing && dbPlan?.rsvps?.filter((r: any) => r.response === 'not_going').length > 0 && (
                     <div className="ml-6 space-y-1">
-                      {dbPlan.rsvps.filter((r: any) => r.response === 'not-going').map((rsvp: any) => (
+                      {dbPlan.rsvps.filter((r: any) => r.response === 'not_going').map((rsvp: any) => (
                         <div key={rsvp.id} className="text-sm text-slate-600 dark:text-slate-400">
                           • {rsvp.name}
                         </div>
