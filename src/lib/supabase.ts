@@ -1,12 +1,27 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Only create client if we have real credentials
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+})
 
 // Quick helper functions for PlanPal
 export const planHelpers = {
+  // Check if Supabase is properly configured
+  isConfigured() {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL && 
+           process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
+           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && 
+           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder-key'
+  },
+
   // Create a new plan
   async createPlan(planData: {
     name: string
@@ -17,6 +32,10 @@ export const planHelpers = {
     location_address?: string
     description?: string
   }) {
+    if (!this.isConfigured()) {
+      throw new Error('Supabase not configured')
+    }
+    
     const { data, error } = await supabase
       .from('plans')
       .insert(planData)
@@ -29,6 +48,10 @@ export const planHelpers = {
 
   // Get plan by share code
   async getPlanByShareCode(shareCode: string) {
+    if (!this.isConfigured()) {
+      throw new Error('Supabase not configured')
+    }
+    
     const { data, error } = await supabase
       .from('plans')
       .select(`
@@ -48,6 +71,10 @@ export const planHelpers = {
     email?: string
     response: 'going' | 'not-going' | 'maybe'
   }) {
+    if (!this.isConfigured()) {
+      throw new Error('Supabase not configured')
+    }
+    
     const { data, error } = await supabase
       .from('rsvps')
       .upsert({
@@ -65,6 +92,10 @@ export const planHelpers = {
 
   // Get all plans (for dashboard)
   async getAllPlans() {
+    if (!this.isConfigured()) {
+      throw new Error('Supabase not configured')
+    }
+    
     const { data, error } = await supabase
       .from('plans')
       .select('*')
