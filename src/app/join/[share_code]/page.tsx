@@ -162,25 +162,46 @@ export default function JoinPage() {
 
   // Add this RSVP handler function
   const handleRSVP = async (response: 'going' | 'not-going' | 'maybe') => {
-    if (!dbPlan) {
-      alert('Plan not loaded yet')
-      return
-    }
-    
     try {
       // Simple prompt for now (you can make this prettier later)
       const name = prompt('Your name:')
       if (!name) return // User cancelled
       
-      await planHelpers.submitRSVP(dbPlan.id, {
-        name: name,
-        email: prompt('Your email (optional):') || undefined,
-        response: response
-      })
+      const email = prompt('Your email (optional):') || undefined
       
-      alert(`Thanks ${name}! You're ${response} to ${dbPlan.name}!`)
+      // Try database first if available
+      if (dbPlan && planHelpers.isConfigured()) {
+        try {
+          await planHelpers.submitRSVP(dbPlan.id, {
+            name: name,
+            email: email,
+            response: response
+          })
+          
+          alert(`Thanks ${name}! You're ${response} to ${dbPlan.name}!`)
+          window.location.reload()
+          return
+        } catch (dbError) {
+          console.log('Database RSVP failed, using localStorage fallback:', dbError)
+        }
+      }
       
-      // Reload to show updated RSVP count
+      // Fallback to localStorage
+      const rsvpData = {
+        id: `rsvp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        plan_id: shareCode,
+        user_email: email || 'no-email',
+        user_name: name,
+        status: response,
+        created_at: new Date().toISOString()
+      }
+      
+      const existingRsvps = localStorage.getItem('rsvps')
+      const allRsvps = existingRsvps ? JSON.parse(existingRsvps) : []
+      allRsvps.push(rsvpData)
+      localStorage.setItem('rsvps', JSON.stringify(allRsvps))
+      
+      alert(`Thanks ${name}! You're ${response} to ${plan?.name || 'this event'}!`)
       window.location.reload()
       
     } catch (error) {
@@ -595,6 +616,117 @@ export default function JoinPage() {
                     Please enter your name and email to RSVP
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Share Options */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-[#ffb829]" />
+                  Share This Event
+                </CardTitle>
+                <CardDescription>
+                  Invite others to join this event
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const url = `${window.location.origin}/join/${shareCode}`
+                      navigator.clipboard.writeText(url)
+                      alert('Link copied to clipboard!')
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Copy Link
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const name = prompt('Your name:')
+                      if (!name) return
+                      
+                      const phone = prompt('Recipient phone number (with country code, e.g., +1234567890):')
+                      if (!phone) return
+                      
+                      try {
+                        const response = await fetch('/api/send-sms', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            to: phone,
+                            message: `Hi! ${name} invited you to "${plan?.name || 'an event'}" on ${plan?.date}. Join here: ${window.location.href}`
+                          })
+                        })
+                        
+                        if (response.ok) {
+                          alert('SMS sent successfully!')
+                        } else {
+                          alert('Failed to send SMS. Please try again.')
+                        }
+                      } catch (error) {
+                        console.error('SMS error:', error)
+                        alert('Failed to send SMS. Please try again.')
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Send SMS
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const name = prompt('Your name:')
+                      if (!name) return
+                      
+                      const email = prompt('Recipient email:')
+                      if (!email) return
+                      
+                      try {
+                        const response = await fetch('/api/send-email', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            to: email,
+                            subject: `You're invited to "${plan?.name || 'an event'}"`,
+                            html: `
+                              <h2>You're invited to an event!</h2>
+                              <p>Hi there!</p>
+                              <p><strong>${name}</strong> invited you to <strong>"${plan?.name || 'an event'}"</strong></p>
+                              <p><strong>Date:</strong> ${plan?.date}</p>
+                              <p><strong>Time:</strong> ${plan?.time}</p>
+                              <p><strong>Location:</strong> ${plan?.location_name || 'TBD'}</p>
+                              <br>
+                              <a href="${window.location.href}" style="background: #ffb829; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Join Event</a>
+                              <br><br>
+                              <p>Best regards,<br>PlanPal AI</p>
+                            `
+                          })
+                        })
+                        
+                        if (response.ok) {
+                          alert('Email sent successfully!')
+                        } else {
+                          alert('Failed to send email. Please try again.')
+                        }
+                      } catch (error) {
+                        console.error('Email error:', error)
+                        alert('Failed to send email. Please try again.')
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Send Email
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
