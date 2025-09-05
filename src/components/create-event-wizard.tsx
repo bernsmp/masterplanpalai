@@ -24,6 +24,7 @@ import { planHelpers } from "@/lib/supabase";
 
 const steps = [
   { id: "basics", title: "Event Basics", icon: Calendar },
+  { id: "time", title: "Time & Voting", icon: Clock },
   { id: "location", title: "Location", icon: MapPin },
   { id: "details", title: "Details", icon: Activity },
   { id: "invites", title: "Invite Guests", icon: Mail },
@@ -107,6 +108,10 @@ export function CreateEventWizard() {
     invites: [],
   });
 
+  // New state for progressive disclosure
+  const [enableDateVoting, setEnableDateVoting] = useState(false);
+  const [enableVenueSuggestions, setEnableVenueSuggestions] = useState(false);
+
   const updateFormData = (field: keyof EventFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -155,16 +160,17 @@ export function CreateEventWizard() {
         return formData.creatorName.trim() !== "" && 
                formData.creatorEmail.trim() !== "" && 
                formData.eventName.trim() !== "" && 
-               formData.eventDate !== "" && 
-               formData.eventTime !== "" &&
-               formData.dateOptions.some(option => option.date !== "" && option.time !== "");
-      case 1: // Location
+               formData.eventDate !== "";
+      case 1: // Time & Voting
+        return formData.eventTime !== "" && 
+               (!enableDateVoting || formData.dateOptions.some(option => option.date !== "" && option.time !== ""));
+      case 2: // Location
         return formData.locationName.trim() !== "" && formData.locationAddress.trim() !== "";
-      case 2: // Details
+      case 3: // Details
         return true; // Optional step
-      case 3: // Invites
+      case 4: // Invites
         return true; // Optional step
-      case 4: // Review
+      case 5: // Review
         return true;
       default:
         return true;
@@ -454,66 +460,90 @@ export function CreateEventWizard() {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
-      {/* Progress indicator */}
+      {/* Progress indicator - Mobile optimized */}
       <motion.div
-        className="mb-8"
+        className="mb-6 px-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex justify-between mb-4">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <motion.div
-                key={index}
-                className="flex flex-col items-center flex-1"
-                whileHover={{ scale: 1.05 }}
-              >
-                <motion.div
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
-                    index < currentStep
-                      ? "text-white"
-                      : index === currentStep
-                        ? "text-white ring-4"
-                        : "bg-muted text-muted-foreground",
-                  )}
-                  style={{
-                    backgroundColor: index <= currentStep ? brandColor : undefined,
-                    boxShadow: index === currentStep ? `0 0 0 4px ${brandColor}33` : undefined,
-                  }}
-                  onClick={() => {
-                    if (index < currentStep) {
-                      setCurrentStep(index);
-                    }
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Icon className="h-5 w-5" />
-                </motion.div>
-                <motion.span
-                  className={cn(
-                    "text-xs mt-2 font-medium",
-                    index === currentStep
-                      ? "text-primary"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {step.title}
-                </motion.span>
-              </motion.div>
-            );
-          })}
+        {/* Mobile: Show current step and progress bar */}
+        <div className="block sm:hidden mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">
+              Step {currentStep + 1} of {steps.length}
+            </span>
+            <span className="text-sm text-gray-500">
+              {steps[currentStep].title}
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full"
+              style={{ backgroundColor: brandColor }}
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
         </div>
-        <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full"
-            style={{ backgroundColor: brandColor }}
-            initial={{ width: 0 }}
-            animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-            transition={{ duration: 0.3 }}
-          />
+
+        {/* Desktop: Show all steps */}
+        <div className="hidden sm:block">
+          <div className="flex justify-between mb-4">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={index}
+                  className="flex flex-col items-center flex-1"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <motion.div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                      index < currentStep
+                        ? "text-white"
+                        : index === currentStep
+                          ? "text-white ring-4"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                    style={{
+                      backgroundColor: index <= currentStep ? brandColor : undefined,
+                      boxShadow: index === currentStep ? `0 0 0 4px ${brandColor}33` : undefined,
+                    }}
+                    onClick={() => {
+                      if (index < currentStep) {
+                        setCurrentStep(index);
+                      }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </motion.div>
+                  <motion.span
+                    className={cn(
+                      "text-xs mt-2 font-medium text-center",
+                      index === currentStep
+                        ? "text-primary"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {step.title}
+                  </motion.span>
+                </motion.div>
+              );
+            })}
+          </div>
+          <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full"
+              style={{ backgroundColor: brandColor }}
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
         </div>
       </motion.div>
 
@@ -522,8 +552,9 @@ export function CreateEventWizard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
+        className="px-4 sm:px-0"
       >
-        <Card className="border-2 shadow-xl">
+        <Card className="border-2 shadow-xl mx-auto max-w-2xl">
           <form onSubmit={(e) => {
             e.preventDefault();
             if (isStepValid()) {
@@ -545,31 +576,32 @@ export function CreateEventWizard() {
               {/* Step 1: Event Basics */}
               {currentStep === 0 && (
                 <>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Let's plan something awesome!</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-2xl sm:text-3xl">Let's plan something awesome!</CardTitle>
+                    <CardDescription className="text-base">
                       Start with the basic details of your event
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Creator Info Section */}
-                    <motion.div variants={fadeInUp} className="space-y-4 border-b pb-4 mb-4">
-                      <h3 className="font-semibold text-lg">Your Info (so you can manage this event)</h3>
+                  <CardContent className="space-y-6 px-4 sm:px-6">
+                    {/* Creator Info Section - Compact */}
+                    <motion.div variants={fadeInUp} className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-base">Your Info</h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="creatorName">Your Name</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="creatorName" className="text-sm">Your Name</Label>
                           <Input 
                             id="creatorName"
                             value={formData.creatorName}
                             onChange={(e) => updateFormData("creatorName", e.target.value)}
                             placeholder="John Doe"
                             required
+                            className="h-10"
                           />
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label htmlFor="creatorEmail">Your Email</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="creatorEmail" className="text-sm">Your Email</Label>
                           <Input 
                             id="creatorEmail"
                             type="email"
@@ -577,130 +609,178 @@ export function CreateEventWizard() {
                             onChange={(e) => updateFormData("creatorEmail", e.target.value)}
                             placeholder="john@example.com"
                             required
+                            className="h-10"
                           />
                         </div>
                       </div>
                       
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500">
                         We'll use this to let you manage your events (no password needed)
                       </p>
                     </motion.div>
 
+                    {/* Event Name - Prominent */}
                     <motion.div variants={fadeInUp} className="space-y-2">
-                      <Label htmlFor="eventName">What are you planning?</Label>
+                      <Label htmlFor="eventName" className="text-base font-medium">What are you planning?</Label>
                       <Input
                         id="eventName"
                         placeholder="Birthday party, team lunch, game night..."
                         value={formData.eventName}
                         onChange={(e) => updateFormData("eventName", e.target.value)}
-                        className="text-lg"
+                        className="text-lg h-12"
                       />
                     </motion.div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <motion.div variants={fadeInUp} className="space-y-2">
-                        <Label htmlFor="eventDate">When is it?</Label>
-                        <Input
-                          id="eventDate"
-                          type="date"
-                          min={today}
-                          value={formData.eventDate}
-                          onChange={(e) => updateFormData("eventDate", e.target.value)}
-                        />
-                      </motion.div>
-                      
-                      <motion.div variants={fadeInUp} className="space-y-2">
-                        <Label htmlFor="eventTime">What time?</Label>
-                        <Input
-                          id="eventTime"
-                          type="time"
-                          value={formData.eventTime}
-                          onChange={(e) => updateFormData("eventTime", e.target.value)}
-                        />
-                      </motion.div>
-                    </div>
-                    
+                    {/* Event Vibe - Right after event name */}
                     <motion.div variants={fadeInUp} className="space-y-2">
-                      <Label htmlFor="eventVibe">What's the vibe? (optional)</Label>
+                      <Label htmlFor="eventVibe" className="text-base font-medium">What's the vibe? (optional)</Label>
                       <Input
                         id="eventVibe"
                         placeholder="Casual hangout, formal dinner, outdoor adventure..."
                         value={formData.eventVibe}
                         onChange={(e) => updateFormData("eventVibe", e.target.value)}
+                        className="h-10"
                       />
                       <p className="text-sm text-muted-foreground">
                         This helps us suggest the perfect venues for your event
                       </p>
                     </motion.div>
-
-                    {/* Date Options for Polling */}
-                    <motion.div variants={fadeInUp} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Propose Multiple Dates (Let attendees vote!)</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Add multiple date/time options and let your guests vote on their availability
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {formData.dateOptions.map((option, index) => (
-                          <div key={index} className="flex gap-2 items-end">
-                            <div className="flex-1">
-                              <Label htmlFor={`date-${index}`} className="text-xs">Date</Label>
-                              <Input
-                                id={`date-${index}`}
-                                type="date"
-                                min={today}
-                                value={option.date}
-                                onChange={(e) => updateDateOption(index, 'date', e.target.value)}
-                                className="text-sm"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <Label htmlFor={`time-${index}`} className="text-xs">Time</Label>
-                              <Input
-                                id={`time-${index}`}
-                                type="time"
-                                value={option.time}
-                                onChange={(e) => updateDateOption(index, 'time', e.target.value)}
-                                className="text-sm"
-                              />
-                            </div>
-                            {formData.dateOptions.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeDateOption(index)}
-                                className="px-2"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                        
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={addDateOption}
-                          className="w-full"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Another Date Option
-                        </Button>
-                      </div>
+                    
+                    {/* Date - Single field, prominent */}
+                    <motion.div variants={fadeInUp} className="space-y-2">
+                      <Label htmlFor="eventDate" className="text-base font-medium">When is it?</Label>
+                      <Input
+                        id="eventDate"
+                        type="date"
+                        min={today}
+                        value={formData.eventDate}
+                        onChange={(e) => updateFormData("eventDate", e.target.value)}
+                        className="h-12 text-lg"
+                      />
                     </motion.div>
                   </CardContent>
                 </>
               )}
 
-              {/* Step 2: Location */}
+              {/* Step 2: Time & Voting */}
               {currentStep === 1 && (
                 <>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Where's it happening?</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-2xl sm:text-3xl">Time & Voting</CardTitle>
+                    <CardDescription className="text-base">
+                      Set the time and decide if you want attendees to vote on dates
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 px-4 sm:px-6">
+                    {/* Basic Time */}
+                    <motion.div variants={fadeInUp} className="space-y-2">
+                      <Label htmlFor="eventTime" className="text-base font-medium">What time?</Label>
+                      <Input
+                        id="eventTime"
+                        type="time"
+                        value={formData.eventTime}
+                        onChange={(e) => updateFormData("eventTime", e.target.value)}
+                        className="h-12 text-lg"
+                      />
+                    </motion.div>
+
+                    {/* Date Voting Toggle */}
+                    <motion.div variants={fadeInUp} className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          id="enableDateVoting"
+                          checked={enableDateVoting}
+                          onCheckedChange={(checked) => {
+                            setEnableDateVoting(checked as boolean);
+                            if (!checked) {
+                              // Reset date options if disabling
+                              setFormData(prev => ({
+                                ...prev,
+                                dateOptions: [{ date: "", time: "" }]
+                              }));
+                            }
+                          }}
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="enableDateVoting" className="text-base font-medium cursor-pointer">
+                            Let attendees vote on dates
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Add multiple date/time options and let your guests vote on their availability
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Date Options - Only show if enabled */}
+                      {enableDateVoting && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-3 p-4 bg-blue-50 rounded-lg border"
+                        >
+                          <h4 className="font-medium text-sm text-blue-900">Date Options</h4>
+                          <div className="space-y-3">
+                            {formData.dateOptions.map((option, index) => (
+                              <div key={index} className="flex gap-2 items-end">
+                                <div className="flex-1">
+                                  <Label htmlFor={`date-${index}`} className="text-xs">Date</Label>
+                                  <Input
+                                    id={`date-${index}`}
+                                    type="date"
+                                    min={today}
+                                    value={option.date}
+                                    onChange={(e) => updateDateOption(index, 'date', e.target.value)}
+                                    className="text-sm h-9"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <Label htmlFor={`time-${index}`} className="text-xs">Time</Label>
+                                  <Input
+                                    id={`time-${index}`}
+                                    type="time"
+                                    value={option.time}
+                                    onChange={(e) => updateDateOption(index, 'time', e.target.value)}
+                                    className="text-sm h-9"
+                                  />
+                                </div>
+                                {formData.dateOptions.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeDateOption(index)}
+                                    className="px-2 h-9"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                            
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={addDateOption}
+                              className="w-full h-9 text-sm"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Another Date Option
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </CardContent>
+                </>
+              )}
+
+              {/* Step 3: Location */}
+              {currentStep === 2 && (
+                <>
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-2xl sm:text-3xl">Where's it happening?</CardTitle>
+                    <CardDescription className="text-base">
                       Search for a venue, browse recommendations, or enter manually
                     </CardDescription>
                   </CardHeader>
@@ -811,8 +891,8 @@ export function CreateEventWizard() {
                 </>
               )}
 
-              {/* Step 3: Details */}
-              {currentStep === 2 && (
+              {/* Step 4: Details */}
+              {currentStep === 3 && (
                 <>
                   <CardHeader>
                     <CardTitle className="text-2xl">Event Details (Optional)</CardTitle>
@@ -852,8 +932,8 @@ export function CreateEventWizard() {
                 </>
               )}
 
-              {/* Step 4: Invitations */}
-              {currentStep === 3 && (
+              {/* Step 5: Invitations */}
+              {currentStep === 4 && (
                 <>
                   <CardHeader>
                     <CardTitle className="text-2xl">Invite Friends (Optional)</CardTitle>
@@ -925,8 +1005,8 @@ export function CreateEventWizard() {
                 </>
               )}
 
-              {/* Step 5: Review */}
-              {currentStep === 4 && (
+              {/* Step 6: Review */}
+              {currentStep === 5 && (
                 <>
                   <CardHeader>
                     <CardTitle className="text-2xl">Almost there!</CardTitle>
@@ -1018,24 +1098,33 @@ export function CreateEventWizard() {
               </motion.div>
             </AnimatePresence>
 
-            <CardFooter className="flex justify-between pt-6">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <CardFooter className="flex flex-col sm:flex-row gap-3 pt-6 px-4 sm:px-6">
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
+              >
                 <Button
                   type="button"
                   variant="outline"
                   onClick={prevStep}
                   disabled={currentStep === 0}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto h-12"
                 >
                   <ChevronLeft className="h-4 w-4" /> Back
                 </Button>
               </motion.div>
               
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
+              >
                 <Button
                   type="submit"
                   disabled={!isStepValid() || isSubmitting || isSubmitted}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto h-12 text-base"
+                  style={{ backgroundColor: brandColor, borderColor: brandColor }}
                 >
                   {isSubmitting ? (
                     <>
@@ -1077,4 +1166,5 @@ export function CreateEventWizard() {
       </AnimatePresence>
     </div>
   );
+}
 }
